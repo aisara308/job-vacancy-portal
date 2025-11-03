@@ -1,0 +1,96 @@
+body {
+    margin: 0;
+    background-color: #1e1e1e;
+    font-family: "Segoe UI", sans-serif;
+    color: #fff;
+}
+
+/* Контейнер */
+.container {
+    text-align: center;
+    padding-top: 40px;
+}
+
+/* Заголовок */
+.title {
+    text-align: left;
+    margin-left: 25px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #d7c1a0;
+}
+
+/* Навигационные вкладки */
+.tabs {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    margin: 15px auto 0 auto;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    border: none;
+    border-radius: 12px;
+    background-color: #3a3a3a;
+    color: #f5f5f5;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.tab:hover {
+    background-color: #4a4a4a;
+}
+
+.tab.active {
+    background-color: #d7c1a0;
+    color: #1e1e1e;
+    font-weight: bold;
+}
+
+/* Контент */
+.content {
+  text-align: center;
+  margin: auto;
+  margin-top: 120px; /* немного ниже панели */
+  width: 90%;
+  max-width: 500px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.hidden {
+  display: none;
+}
+
+.content h2 {
+  font-weight: bold;
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.content p {
+  color: #bcbcbc;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.btn {
+  background-color: #40553a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.btn:hover {
+  background-color: #506c49;
+}
+

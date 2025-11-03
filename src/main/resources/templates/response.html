@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="kk" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Жауаптар беті</title>
+    <link rel="stylesheet" th:href="@{/css/response.css}">
+</head>
+<body>
+
+<div class="tabs">
+    <button class="tab active" data-tab="all">Барлығы</button>
+    <button class="tab" data-tab="waiting">Жауап күтуде</button>
+    <button class="tab" data-tab="declined">Бас тартылды</button>
+    <button class="tab" data-tab="interview">Сұхбат</button>
+    <button class="tab" data-tab="invited">Шақыру</button>
+</div>
+
+<div id="all" class="content">
+    <h2>Осы бет бос</h2>
+    <p>Сізге арналған вакансиялар тізімін қарап шығыңыз</p>
+    <button class="btn">Вакансия іздеу</button>
+</div>
+
+<div id="waiting" class="content hidden">
+    <h2>Жауап күтуде</h2>
+    <p>Сіздің өтінішіңіз қарастырылуда.</p>
+</div>
+
+<div id="declined" class="content hidden">
+    <h2>Бас тартылды</h2>
+    <p>Өкінішке орай, бұл вакансияға өтініш қабылданбады.</p>
+</div>
+
+<div id="interview" class="content hidden">
+    <h2>Сұхбат</h2>
+    <p>Сізге сұхбатқа шақыру бар!</p>
+</div>
+
+<div id="invited" class="content hidden">
+    <h2>Шақыру</h2>
+    <p>Сізге жаңа ұсыныс келді!</p>
+</div>
+
+<script>
+    const tabs = document.querySelectorAll('.tab');
+    const contents = document.querySelectorAll('.content');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        contents.forEach(c => c.classList.add('hidden'));
+        document.getElementById(tab.dataset.tab).classList.remove('hidden');
+      });
+    });
+</script>
+<link rel="stylesheet" th:href="@{/css/footer.css}">
+<div th:replace="index :: footer"></div>
+</body>
+</html>

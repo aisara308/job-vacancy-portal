@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #1a1a1a;
+  color: #e5d2b5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.login-form {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 1.8rem;
+}
+
+input {
+  background-color: #DDC9A9;
+  border: none;
+  border-radius: 5px;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  color: #1a1a1a;
+  width: 100%;
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field .eye {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.login-btn {
+  background-color: #DDC9A9;
+  color: #1a1a1a;
+  font-weight: 600;
+  border: none;
+  border-radius: 5px;
+  padding: 0.6rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  width: 100%;
+  max-width: 200px;
+}
+
+.login-btn:hover {
+  opacity: 0.8;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: #ffffffb3;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #ffffff33;
+}
+
+.divider:not(:empty)::before {
+  margin-right: .75em;
+}
+.divider:not(:empty)::after {
+  margin-left: .75em;
+}
+
+.google-btn {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.google-btn img {
+  width: 20px;
+  height: 20px;
+}
+
+.signup-text {
+  color: #fff;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+input,
+.google-btn,
+.password-field {
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+}
+.signup-link {
+  color: #d7c3a2;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.signup-link:hover {
+  text-decoration: underline;
+}

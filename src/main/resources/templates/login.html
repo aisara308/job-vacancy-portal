@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="kk" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Кіру</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}" />
+</head>
+<body>
+<div class="container">
+    <h1>Кіру</h1>
+
+    <form class="login-form" onsubmit="login(event)">
+    <input type="text" name="username" placeholder="Аты" required />
+        <div class="password-field">
+            <input type="password" name="password" placeholder="Құпиясөз" required />
+        </div>
+        <button type="submit" class="login-btn">Кіру</button>
+    </form>
+
+    <div class="divider">
+        <span>Немесе</span>
+    </div>
+
+    <p class="signup-text">
+        Аккаунт жоқ па? <a href="/register" class="signup-link">Тіркелу</a>
+    </p>
+</div>
+<script>
+    async function login(event) {
+  event.preventDefault();
+
+  const user = {
+    fullName: document.querySelector('input[name="username"]').value,
+    passwordHash: document.querySelector('input[name="password"]').value
+  };
+
+  try {
+    const response = await fetch("/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(user)
+    });
+
+    const data = await response.json();
+    const token = data.token;
+
+    if (response.ok && token && token !== "fail") {
+      localStorage.setItem("token", token);
+      alert("Кіру сәтті өтті!");
+      window.location.href = "/home";
+    } else {
+      alert("Қате логин немесе құпиясөз!");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Қате орын алды!");
+  }
+}
+</script>
+
+</body>
+</html>

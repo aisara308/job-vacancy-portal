@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="kk" xmlns:th="http://www.thymeleaf.org">
+<footer class="bottom-nav" th:fragment="footer">
+    <a th:href="@{/home}" class="nav-link">
+        <i class="icon">&#128269;</i> <!-- 🔍 -->
+    </a>
+    <a th:href="@{/response}" class="nav-link">
+        <i class="icon">&#9993;</i> <!-- ✉️ -->
+    </a>
+    <a th:href="@{/chat}" class="nav-link notification">
+        <i class="icon">&#128172;</i> <!-- 💬 -->
+        <span class="dot"></span>
+    </a>
+    <a th:href="@{/profile}" class="nav-link">
+        <i class="icon">&#128100;</i> <!-- 👤 -->
+    </a>
+</footer>
+</html>

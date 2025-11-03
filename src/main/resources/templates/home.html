@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="kk" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+</head>
+<body>
+<div class="container">
+    <h1 id="message"></h1>
+    <p id="username"></p>
+    <button onclick="logout()">Шығу</button>
+</div>
+
+<script>
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Кіру қажет!");
+      window.location.href = "/login";
+    } else {
+      fetch("/api/home", {
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
+      .then(data => {
+        document.body.innerHTML += `
+          <h2>Қош келдіңіз, ${data.username}!</h2>
+          <p>${data.message}</p>
+        `;
+      })
+      .catch(err => {
+        alert("Сессия аяқталды. Қайта кіріңіз.");
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      });
+    }
+</script>
+<link rel="stylesheet" th:href="@{/css/footer.css}">
+<div th:replace="index :: footer"></div>
+
+</body>
+</html>
