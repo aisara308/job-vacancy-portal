@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Тіркелу</title>
+    <link rel="stylesheet" href="/css/login.css" />
+</head>
+<body>
+<div class="container">
+    <h1>Тіркелу</h1>
+
+    <form class="login-form" onsubmit="register(event)">
+        <input id="fullName" placeholder="Аты" required>
+        <input id="email" placeholder="Пошта" required>
+        <input id="passwordHash" placeholder="Құпиясөз" type="password" required>
+
+        <div class="user-type">
+            <label><input type="radio" name="userType" value="applicant" required> Ізденуші</label>
+            <label><input type="radio" name="userType" value="employer"> Жұмыс беруші</label>
+        </div>
+
+        <button type="submit" class="login-btn">Тіркелу</button>
+    </form>
+
+    <div class="divider"><span>Немесе</span></div>
+
+    <p class="signup-text">
+        Аккаунт бар ма? <a href="/login" class="signup-link">Кіру</a>
+    </p>
+</div>
+
+<script>
+    async function register(event) {
+      event.preventDefault();
+
+      const user = {
+        fullName: document.getElementById("fullName").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        passwordHash: document.getElementById("passwordHash").value.trim(),
+        userType: document.querySelector('input[name="userType"]:checked').value
+      };
+
+      try {
+        const response = await fetch("/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(user)
+        });
+
+        // ✅ ожидаем JSON с токеном
+        const data = await response.json();
+        const token = data.token;
+
+        if (response.ok && token && token !== "Registration failed") {
+  localStorage.setItem("token", token);
+  alert("Тіркелу сәтті өтті!");
+  alert(token);
+  alert("Redirecting to /home...");
+  window.location.href = "/home";
+
+        } else {
+          alert("Тіркелу сәтсіз аяқталды!");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Қате орын алды!");
+      }
+    }
+
+    async function loadProtectedPage(url) {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(url, {
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      });
+
+      if (response.ok) {
+        const html = await response.text();
+        document.open();
+        document.write(html);
+        document.close();
+      } else {
+        alert("Сессия аяқталды, қайта кіріңіз!");
+        window.location.href = "/login";
+      }
+    }
+</script>
+</body>
+</html>
