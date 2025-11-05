@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<head xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
 </head>
 <body>
-<link rel="stylesheet" th:href="@{/css/footer.css}">
+
 <div th:replace="index :: footer"></div>
+
 </body>
 </html>

@@ -32,14 +32,13 @@ public class jwtFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String path = request.getServletPath();
-
-        // ✅ Пропускаем публичные эндпоинты
         if (path.startsWith("/login") ||
                 path.startsWith("/register") ||
                 path.startsWith("/home") ||
                 path.startsWith("/response") ||
                 path.startsWith("/chat") ||
                 path.startsWith("/profile") ||
+                path.startsWith("/resume") ||
                 path.startsWith("/css/") ||
                 path.startsWith("/js/") ||
                 path.startsWith("/images/")) {
@@ -51,7 +50,6 @@ public class jwtFilter extends OncePerRequestFilter {
         String token = null;
         String username = null;
 
-        // ✅ Достаём токен из заголовка
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
             try {
@@ -61,7 +59,6 @@ public class jwtFilter extends OncePerRequestFilter {
             }
         }
 
-        // ✅ Проверяем и устанавливаем аутентификацию
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 

@@ -11,5 +11,4 @@ public class JobVacancyPortalApplication {
 
         SpringApplication.run(JobVacancyPortalApplication.class, args);
 	}
-
 }

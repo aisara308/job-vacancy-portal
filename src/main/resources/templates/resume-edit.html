@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="kk" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Резюме өңдеу</title>
+    <link rel="stylesheet" th:href="@{/css/resume.css}">
+</head>
+<body>
+<div class="resume-container">
+    <h2>Резюме өңдеу</h2>
+    <form id="resumeEditForm" class="resume-form">
+        <div class="form-grid">
+            <div class="left">
+                <label>Мамандық</label>
+                <input type="text" name="title" id="title" required>
+
+                <label>Қалаған жалақы</label>
+                <input type="number" step="0.01" name="salaryExpectation" id="salaryExpectation">
+
+                <label>Жұмыс кестесі</label>
+                <select name="schedule" id="schedule">
+                    <option value="">Таңдаңыз</option>
+                    <option value="Толық">Толық</option>
+                    <option value="Жартылай">Жартылай</option>
+                    <option value="Қашықтан">Қашықтан</option>
+                </select>
+
+                <label>Төлем мерзімі</label>
+                <select name="paymentTime" id="paymentTime">
+                    <option value="">Таңдаңыз</option>
+                    <option value="Айына">Айына</option>
+                    <option value="Аптасына">Аптасына</option>
+                    <option value="Күніне">Күніне</option>
+                </select>
+            </div>
+
+            <div class="right">
+                <label>Қала</label>
+                <input type="text" name="location" id="location">
+
+                <label>Білімі</label>
+                <select name="education" id="education">
+                    <option value="">Таңдаңыз</option>
+                    <option value="Орта">Орта</option>
+                    <option value="Жоғары">Жоғары</option>
+                    <option value="Колледж">Колледж</option>
+                </select>
+
+                <label>Дағдылар</label>
+                <textarea name="skills" id="skills" rows="4"></textarea>
+
+                <button type="submit" class="create-btn">Сақтау</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    const resumeId = window.location.pathname.split("/").pop();
+    const token = localStorage.getItem("token");
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const res = await fetch(`/resume/get/${resumeId}`, {
+                headers: { "Authorization": "Bearer " + token }
+            });
+            if (!res.ok) {
+                alert("Резюме табылмады!");
+                return;
+            }
+            const data = await res.json();
+
+            document.getElementById("title").value = data.title || "";
+            document.getElementById("salaryExpectation").value = data.salaryExpectation || "";
+            document.getElementById("schedule").value = data.schedule || "";
+            document.getElementById("paymentTime").value = data.paymentTime || "";
+            document.getElementById("location").value = data.location || "";
+            document.getElementById("education").value = data.education || "";
+            document.getElementById("skills").value = data.skills || "";
+        } catch (e) {
+            console.error(e);
+        }
+    });
+
+    document.getElementById("resumeEditForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        const res = await fetch(`/resume/update/${resumeId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+            alert("Резюме сәтті жаңартылды!");
+            window.location.href = "/profile";
+        } else {
+            alert("Қате орын алды!");
+        }
+    });
+</script>
+</body>
+</html>

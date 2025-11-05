@@ -5,13 +5,11 @@ body {
     color: #fff;
 }
 
-/* Контейнер */
 .container {
     text-align: center;
     padding-top: 40px;
 }
 
-/* Заголовок */
 .title {
     text-align: left;
     margin-left: 25px;
@@ -20,7 +18,6 @@ body {
     color: #d7c1a0;
 }
 
-/* Навигационные вкладки */
 .tabs {
     display: flex;
     justify-content: space-between;
@@ -53,7 +50,6 @@ body {
     font-weight: bold;
 }
 
-/* Контент */
 .content {
   text-align: center;
   margin: auto;

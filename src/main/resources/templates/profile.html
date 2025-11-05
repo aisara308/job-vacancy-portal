@@ -1,11 +1,202 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="kk" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Профиль</title>
+    <link rel="stylesheet" href="/css/footer.css">
+    <link rel="stylesheet" th:href="@{/css/profile.css}" />
 </head>
 <body>
-<link rel="stylesheet" th:href="@{/css/footer.css}">
+
+<header class="profile-header">
+    <div class="profile-info">
+        <img th:src="@{/images/avatar.png}" alt="Аватар">
+        <div class="profile-text">
+            <div class="user-header">
+                <h2 id="userName">Жүктелуде...</h2>
+                <button class="delete-account-btn" onclick="deleteAccount()">
+                    <img src="/images/delete.png" alt="Жою" class="icon">
+                </button>
+            </div>
+            <p id="userCreated">Жасалған күні: -</p>
+        </div>
+
+    </div>
+    <button class="trash-btn" onclick="openTrash()">
+        Себет
+        <img th:src="@{/images/delete.png}" alt="Себет" class="icon">
+    </button>
+</header>
+
+<main class="resume-section">
+    <div class="resume-header">
+        <h3>Менің резюмелерім <span class="resume-count">(0)</span></h3>
+    </div>
+
+    <div class="resume-list" id="resumeList">
+        <p>Резюмелер жүктелуде...</p>
+    </div>
+
+    <div style="height: 20px;"></div>
+
+    <a th:href="@{/resume}" class="create-btn">Жаңа резюме жасау
+        <img th:src="@{/images/add.png}" alt="Қосу" class="icon">
+    </a>
+</main>
+
+<div class="logout-btn" onclick="logout()">
+    <img th:src="@{/images/logout.png}" alt="Шығу" class="icon">Шығу
+</div>
+
+<div id="trashModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeTrash()">&times;</span>
+        <h3>Себет (Жойылған резюмелер)</h3>
+        <div id="trashList"></div>
+    </div>
+</div>
+
+
 <div th:replace="index :: footer"></div>
+
+<script>
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Кіру қажет!");
+      window.location.href = "/login";
+    } else {
+      fetch("/api/user", { headers: { "Authorization": "Bearer " + token }})
+        .then(res => res.json())
+        .then(async user => {
+            document.getElementById("userName").textContent = user.fullName || "Белгісіз";
+            document.getElementById("userCreated").textContent =
+             "Жасалған күні: " + (user.createdAt ? new Date(user.createdAt).toLocaleDateString("kk-KZ") : "-");
+
+            loadResumes(user.userId);
+        });
+    }
+
+    async function loadResumes(userId) {
+        const res = await fetch(`/resume/user/${userId}`, {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const resumes = await res.json();
+        const container = document.getElementById("resumeList");
+        document.querySelector(".resume-count").textContent = `(${resumes.length})`;
+
+        if (resumes.length === 0) {
+            container.innerHTML = "<p>Әзірге резюме жоқ.</p>";
+        } else {
+            container.innerHTML = resumes.map(r => `
+              <div class="resume-card">
+                <h4>${r.title || "Атаусыз резюме"}</h4>
+                <p>${r.location || ""}</p>
+                <div class="tags">
+                  <span class="tag">${r.experience || "Тәжірибе жоқ"}</span>
+                  <span class="tag">${r.education || "Білім көрсетілмеген"}</span>
+                  <span class="tag">${r.schedule || "Кесте белгісіз"}</span>
+                </div>
+                <p style="color: #b63a3a;">Жалақы: ${r.salaryExpectation || "Көрсетілмеген"}</p>
+                <div class="resume-actions">
+                  <button class="edit-btn" onclick="editResume(${r.resumeId})">
+                    <img src="/images/editWhite.png" class="icon">
+                  </button>
+                  <button class="delete-btn" onclick="moveToTrash(${r.resumeId})">
+                    <img src="/images/delete.png" class="icon">
+                  </button>
+                </div>
+              </div>
+            `).join("");
+        }
+    }
+
+    function moveToTrash(id)  {
+            fetch(`/resume/delete/${id}`, { method: "PUT" })
+            .then(() => location.reload());
+    }
+
+    function openTrash() {
+        document.getElementById("trashModal").style.display = "block";
+        loadTrash();
+    }
+
+    function closeTrash() {
+        document.getElementById("trashModal").style.display = "none";
+    }
+
+  async function loadTrash() {
+    const userRes = await fetch("/api/user", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+    const user = await userRes.json();
+
+    const res = await fetch(`/resume/trash/${user.userId}`, {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const deleted = await res.json();
+    const container = document.getElementById("trashList");
+
+    if (deleted.length === 0) {
+        container.innerHTML = "<p>Себет бос.</p>";
+    } else {
+        container.innerHTML = deleted.map(r => `
+            <div class="resume-card">
+                <h4>${r.title || "Атаусыз резюме"}</h4>
+                <p>${r.location || ""}</p>
+                <div class="tags">
+                    <span class="tag">${r.experience || "Тәжірибе жоқ"}</span>
+                    <span class="tag">${r.education || "Білім көрсетілмеген"}</span>
+                    <span class="tag">${r.schedule || "Кесте белгісіз"}</span>
+                </div>
+                <p style="color: #b63a3a;">Жалақы: ${r.salaryExpectation || "Көрсетілмеген"}</p>
+                <div class="resume-actions">
+                    <button class="restore-btn" onclick="restoreResume(${r.resumeId})">
+                        Қалпына келтіру
+                    </button>
+                </div>
+            </div>
+        `).join("");
+    }
+}
+
+    function restoreResume(id) {
+        fetch(`/resume/restore/${id}`, { method: "PUT" })
+            .then(() => {
+                closeTrash();
+                location.reload();
+            });
+    }
+
+    function editResume(id) {
+        window.location.href = `/resume/update/${id}`;
+    }
+
+    function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+    }
+    function deleteAccount() {
+    if (confirm("Сіз шынымен аккаунтыңызды жойғыңыз келе ме? Бұл әрекет қайтымсыз.")) {
+        fetch("/delete", {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        })
+        .then(res => {
+            if (res.ok) {
+                localStorage.removeItem("token");
+                window.location.href = "/login";
+            } else {
+                alert("Қате! Аккаунт жойылмады.");
+            }
+        })
+        .catch(() => alert("Сервер қате қайтарды."));
+    }
+}
+</script>
+
 </body>
 </html>

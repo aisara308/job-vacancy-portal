@@ -1,0 +1,311 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background-color: #c0ae94;
+}
+
+.profile-header {
+  background-color: #1e1e1e;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 40px;
+  position: relative;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-info img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-text h2 {
+  margin: 0;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-text p {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: #ddd;
+}
+
+.trash-btn {
+  position: absolute;
+  right: 30px;
+  top: 30px;
+  background: #e6e1d5;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 15px;
+  padding: 10px 10px;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.resume-section {
+  padding: 30px 60px;
+}
+
+.resume-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.resume-header h3 {
+  font-size: 22px;
+  margin: 0;
+}
+
+.resume-count {
+  color: #b63a3a;
+  font-weight: bold;
+}
+
+.resume-list {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.resume-card {
+  background-color: #e7e0d4;
+  border-radius: 10px;
+  padding: 20px;
+  width: 280px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  position: relative;
+}
+
+.resume-card h4 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.resume-card p {
+  margin: 6px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.resume-card .tags {
+  margin: 10px 0;
+}
+
+.tag {
+  background-color: #a9b39d;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
+  font-size: 13px;
+  margin: 3px;
+  color: #fff;
+}
+
+.resume-actions {
+  display: flex;
+  gap: 10px;
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+}
+
+.resume-actions button {
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+
+.edit-btn {
+  background-color: #4a6b53;
+  color: white;
+}
+
+.delete-btn {
+  background-color: #b63a3a;
+  color: white;
+}
+
+.create-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background-color: #4a6c4a;
+  color: #fff;
+  font-size: 15px;
+  padding: 10px 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.create-btn:hover {
+  background-color: #3e5c3e;
+}
+
+.create-btn .icon {
+  width: 100%;
+  height: 18px;
+  object-fit: contain;
+}
+
+.delete-all-btn {
+  background-color: #b63a3a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  margin-left: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 15px;
+  padding: 10px 10px;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.footer-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #3b6048;
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 0;
+}
+
+.footer-nav i {
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.logout-btn {
+  position: absolute;
+  right: 40px;
+  bottom: 60px;
+  color: #b63a3a;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon {
+  height: 18px;
+  width: 100%;
+}
+
+.logout-btn i {
+  font-size: 18px;
+}
+
+.select-all {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modal {
+     display: none;
+     position: fixed;
+     z-index: 1000;
+     left: 0;
+     top: 0;
+     width: 100%;
+     height: 100%;
+     background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #e7e0d4;
+    padding: 20px;
+    width: 70%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+}
+.modal .close {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+    color: #555;
+}
+
+.modal h3 {
+    margin-top: 0;
+}
+
+.restore-btn {
+    background-color: #4a6c4a;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.restore-btn:hover {
+    background-color: #3e5c3e;
+}
+.user-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.delete-account-btn {
+   background-color: #b63a3a;
+  border: none;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-account-btn img.icon {
+    width: 100%;
+    height: 18px;
+    border-radius: 1px;
+}
+
+.delete-account-btn:hover {
+    background-color: #992f2f;
+}

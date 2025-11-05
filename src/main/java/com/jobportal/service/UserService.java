@@ -50,6 +50,22 @@ public class UserService {
         return "fail";
     }
 
+    public Users findByFullName(String fullName) {
+        Users user = repo.findByFullName(fullName);
+        if (user != null) {
+            user.setPasswordHash(null);
+        }
+        return user;
+    }
+
+    public boolean deleteByFullName(String fullName) {
+        Users user = repo.findByFullName(fullName);
+        if (user != null) {
+            repo.delete(user);
+            return true;
+        }
+        return false;
+    }
 
     public JWTService getJwtService() {
         return jwtService;

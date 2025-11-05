@@ -34,12 +34,35 @@
     async function register(event) {
       event.preventDefault();
 
-      const user = {
-        fullName: document.getElementById("fullName").value.trim(),
-        email: document.getElementById("email").value.trim(),
-        passwordHash: document.getElementById("passwordHash").value.trim(),
-        userType: document.querySelector('input[name="userType"]:checked').value
-      };
+      const fullName = document.getElementById("fullName").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("passwordHash").value.trim();
+      const userType = document.querySelector('input[name="userType"]:checked')?.value;
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert("Поштаны дұрыс форматта енгізіңіз! Мысалы: example@gmail.com");
+        return;
+      }
+
+      const nameParts = fullName.split(/\s+/);
+      if (nameParts.length < 2) {
+        alert("Толық аты-жөніңізді енгізіңіз (мысалы: Аян Ермекұлы немесе Аян Қуаныш Ермекұлы).");
+        return;
+      }
+
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-={}[\]|:;"'<>,.?/~`]).{8,}$/;
+      if (!passwordRegex.test(password)) {
+        alert("Құпиясөз тым әлсіз! Кем дегенде 8 таңба, бір әріп, бір сан және бір арнайы таңба болуы керек.");
+        return;
+      }
+
+      if (!userType) {
+        alert("Пайдаланушы түрін таңдаңыз!");
+        return;
+      }
+
+      const user = { fullName, email, passwordHash: password, userType };
 
       try {
         const response = await fetch("/register", {
@@ -48,43 +71,18 @@
           body: JSON.stringify(user)
         });
 
-        // ✅ ожидаем JSON с токеном
         const data = await response.json();
         const token = data.token;
 
         if (response.ok && token && token !== "Registration failed") {
-  localStorage.setItem("token", token);
-  alert("Тіркелу сәтті өтті!");
-  alert(token);
-  alert("Redirecting to /home...");
-  window.location.href = "/home";
-
+          localStorage.setItem("token", token);
+          window.location.href = "/home";
         } else {
           alert("Тіркелу сәтсіз аяқталды!");
         }
       } catch (err) {
         console.error(err);
         alert("Қате орын алды!");
-      }
-    }
-
-    async function loadProtectedPage(url) {
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(url, {
-        headers: {
-          "Authorization": "Bearer " + token
-        }
-      });
-
-      if (response.ok) {
-        const html = await response.text();
-        document.open();
-        document.write(html);
-        document.close();
-      } else {
-        alert("Сессия аяқталды, қайта кіріңіз!");
-        window.location.href = "/login";
       }
     }
 </script>

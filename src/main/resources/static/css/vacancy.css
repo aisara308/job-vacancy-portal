@@ -13,7 +13,6 @@ body {
   gap: 50px;
 }
 
-/* Левая часть */
 .left {
   flex: 1;
   color: #fff;
@@ -74,7 +73,6 @@ body {
   background-color: #c85c5c;
 }
 
-/* Правая часть */
 .right {
   flex: 1.5;
   background-color: #fff;
@@ -112,7 +110,6 @@ body {
   line-height: 1.6;
 }
 
-/* Адаптив */
 @media (max-width: 900px) {
   .vacancy-page {
     flex-direction: column;

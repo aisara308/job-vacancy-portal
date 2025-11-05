@@ -24,8 +24,22 @@
   transform: scale(1.15);
 }
 
-.icon {
-  font-size: 24px;
+.nav-link img.nav-icon {
+    width: 28px;
+    height: 28px;
+    filter: brightness(95%);
+    transition: transform 0.2s ease;
+}
+
+.nav-link-mail img.nav-icon {
+    width: 28px;
+    height: 22px;
+    filter: brightness(95%);
+    transition: transform 0.2s ease;
+}
+
+.nav-link img.nav-icon:hover {
+    transform: scale(0.9);
 }
 
 .notification .dot {

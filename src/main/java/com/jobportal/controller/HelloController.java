@@ -1,7 +1,12 @@
 package com.jobportal.controller;
 
+
+import com.jobportal.model.Resumes;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @Controller
 public class HelloController {
@@ -23,7 +28,7 @@ public class HelloController {
 
     @GetMapping("/home")
     public String homePage() {
-        return "home"; // HTML загрузится, а потом JS сам запросит защищенные данные
+        return "home";
     }
 
     @GetMapping("/response")
@@ -40,4 +45,5 @@ public class HelloController {
     public String profilePage() {
         return "profile";
     }
+
 }

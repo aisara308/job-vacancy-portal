@@ -11,7 +11,7 @@
     <h1>Кіру</h1>
 
     <form class="login-form" onsubmit="login(event)">
-    <input type="text" name="username" placeholder="Аты" required />
+        <input type="text" name="username" placeholder="Толық аты" required />
         <div class="password-field">
             <input type="password" name="password" placeholder="Құпиясөз" required />
         </div>
@@ -47,7 +47,6 @@
 
     if (response.ok && token && token !== "fail") {
       localStorage.setItem("token", token);
-      alert("Кіру сәтті өтті!");
       window.location.href = "/home";
     } else {
       alert("Қате логин немесе құпиясөз!");

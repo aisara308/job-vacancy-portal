@@ -2,46 +2,92 @@
 <html lang="kk" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Home</title>
+    <title>Вакансиялар</title>
+    <link rel="stylesheet" href="/css/footer.css">
+    <link rel="stylesheet" th:href="@{/css/home.css}" />
 </head>
 <body>
-<div class="container">
-    <h1 id="message"></h1>
-    <p id="username"></p>
-    <button onclick="logout()">Шығу</button>
-</div>
+
+<header class="top-bar">
+    <h2 class="logo">Вакансиялар</h2>
+    <div class="search-bar">
+        <input type="text" placeholder="Іздеу...">
+        <button class="search-btn"><img th:src="@{/images/searchRed.png}" alt="Іздеу" class="icon"></button>
+        <button class="filter-btn"><img th:src="@{/images/filter.png}" alt="Фильтр" class="icon"></button>
+    </div>
+</header>
+
+<main class="vacancies-container"></main>
+
+<div th:replace="index :: footer"></div>
 
 <script>
-    const token = localStorage.getItem("token");
+    document.addEventListener("DOMContentLoaded", async () => {
+      const token = localStorage.getItem("token");
 
-    if (!token) {
-      alert("Кіру қажет!");
-      window.location.href = "/login";
-    } else {
-      fetch("/api/home", {
-        headers: {
-          "Authorization": "Bearer " + token
-        }
-      })
-      .then(res => {
-        if (!res.ok) throw new Error("Unauthorized");
-        return res.json();
-      })
-      .then(data => {
-        document.body.innerHTML += `
-          <h2>Қош келдіңіз, ${data.username}!</h2>
-          <p>${data.message}</p>
-        `;
-      })
-      .catch(err => {
-        alert("Сессия аяқталды. Қайта кіріңіз.");
-        localStorage.removeItem("token");
+      if (!token) {
+        alert("Кіру қажет!");
         window.location.href = "/login";
-      });
-    }
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/home", {
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        });
+
+        if (!response.ok) {
+          console.error("Ошибка при загрузке вакансий:", response.status);
+          if (response.status === 403 || response.status === 401) {
+            alert("Сессия аяқталды. Қайта кіріңіз.");
+            localStorage.removeItem("token");
+            window.location.href = "/login";
+          }
+          return;
+        }
+
+        const data = await response.json();
+        const vacancies = data.vacancies || [];
+        const container = document.querySelector(".vacancies-container");
+
+        if (vacancies.length === 0) {
+          container.innerHTML = "<p style='text-align:center;color:#333;'>Әлі вакансия жоқ.</p>";
+          return;
+        }
+
+        vacancies.forEach(vac => {
+          const card = document.createElement("div");
+          card.className = "vacancy-card";
+          card.innerHTML = `
+            <div class="vacancy-header">
+                <span class="icon"><img src="/images/job.png" alt="Вакансия" class="icon"></span>
+                <h3>${vac.title}</h3>
+                <span class="like"><button class="like-btn"><img src="/images/thumbUp.png" alt="Фильтр" class="icon"></button></span>
+            </div>
+            <p class="date">Соңғы өзгеріс: ${vac.createdAt ? vac.createdAt.substring(0, 10) : "-"}</p>
+            <p class="company"><img src="/images/address.png" alt="Адрес" class="icon"> ${vac.adres}, Астана</p>
+            <div class="tags">
+                ${vac.forStudents ? "<span>Студенттерге арналған</span>" : ""}
+                ${vac.remote ? "<span>Қашықтан</span>" : ""}
+            </div>
+            <div class="salary">
+              ${vac.salaryFrom ? vac.salaryFrom + " ₸" : ""}
+              ${vac.salaryTo ? " – " + vac.salaryTo + " ₸" : ""}
+            </div>
+            <p class="responses"><span>0</span> адам жауап берді</p>
+            <button class="apply-btn">Жауап беру ➤</button>
+          `;
+          container.appendChild(card);
+        });
+
+      } catch (error) {
+        console.error("Қате:", error);
+        alert("Сервермен байланыс үзілді. Кейінірек қайталаңыз.");
+      }
+    });
 </script>
-<link rel="stylesheet" th:href="@{/css/footer.css}">
-<div th:replace="index :: footer"></div>
 
 </body>
 </html>

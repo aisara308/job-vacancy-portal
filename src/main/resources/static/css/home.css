@@ -1,0 +1,157 @@
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #1c1b1a;
+    color: #f1e7cf;
+}
+
+.top-bar {
+    display: flex;
+    flex-direction: column;
+    gap:10px;
+    padding: 15px 25px;
+    background-color: #1c1b1a;
+}
+
+.logo {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: #e9d7b8;
+    text-align: center;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    margin: 0 auto;
+    justify-content: center;
+    gap: 8px;
+}
+
+.search-bar input {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    width: 260px;
+    font-size: 1em;
+    outline: none;
+}
+
+.search-btn, .filter-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.vacancies-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 20px;
+    padding: 25px;
+}
+
+.vacancy-card {
+    background-color: #a08e75;
+    border-radius: 10px;
+    padding: 20px;
+    position: relative;
+}
+
+.vacancy-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.vacancy-header h3 {
+    margin: 0;
+    text-align: center;
+    flex-grow: 1;
+}
+
+.icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.like-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.date, .company {
+    margin: 6px 0;
+    color: #2e2e2e;
+}
+
+.tags {
+    margin: 8px 0;
+}
+
+.tags span {
+    display: inline-block;
+    background-color: #65715d;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.9em;
+    margin: 3px;
+}
+
+.salary {
+    font-size: 2em;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.responses {
+    color: #100d0d;
+}
+
+.responses span {
+    color: #c02f2f;
+    font-weight: bold;
+}
+
+.apply-btn {
+    background-color: #b73a34;
+    border: none;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.95em;
+    cursor: pointer;
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+}
+
+.apply-btn:hover {
+    background-color: #982c28;
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #445c45;
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0;
+}
+
+.bottom-nav button {
+    background: none;
+    border: none;
+    font-size: 1.6em;
+    color: #f1e7cf;
+    cursor: pointer;
+}

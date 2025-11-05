@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 public class Users {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // соответствует SERIAL
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
     @Column(nullable = false, length = 255)

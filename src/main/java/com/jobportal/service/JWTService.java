@@ -16,12 +16,9 @@ import java.util.function.Function;
 
 @Service
 public class JWTService {
-
-    // ✅ Фиксированный ключ из application.properties
     @Value("${jwt.secret}")
     private String secretKey;
 
-    // срок действия токена (1 час)
     private static final long EXPIRATION_TIME = 1000 * 60 * 60;
 
     public String generateToken(String username) {

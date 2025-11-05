@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html lang="kk" xmlns:th="http://www.thymeleaf.org">
 <footer class="bottom-nav" th:fragment="footer">
+
     <a th:href="@{/home}" class="nav-link">
-        <i class="icon">&#128269;</i> <!-- 🔍 -->
+        <img th:src="@{/images/search.png}" alt="Іздеу" class="nav-icon">
     </a>
-    <a th:href="@{/response}" class="nav-link">
-        <i class="icon">&#9993;</i> <!-- ✉️ -->
+
+    <a th:href="@{/response}" class="nav-link-mail">
+        <img th:src="@{/images/mail.png}" alt="Хабарламалар" class="nav-icon">
     </a>
+
     <a th:href="@{/chat}" class="nav-link notification">
-        <i class="icon">&#128172;</i> <!-- 💬 -->
+        <img th:src="@{/images/chat.png}" alt="Чат" class="nav-icon">
         <span class="dot"></span>
     </a>
+
     <a th:href="@{/profile}" class="nav-link">
-        <i class="icon">&#128100;</i> <!-- 👤 -->
+        <img th:src="@{/images/user.png}" alt="Профиль" class="nav-icon">
     </a>
+
 </footer>
 </html>
