@@ -31,6 +31,9 @@
         return;
       }
 
+      let vacancies = [];
+      const container = document.querySelector(".vacancies-container");
+
       try {
         const response = await fetch("/api/home", {
           headers: {
@@ -49,15 +52,36 @@
         }
 
         const data = await response.json();
-        const vacancies = data.vacancies || [];
-        const container = document.querySelector(".vacancies-container");
+        vacancies = data.vacancies || [];
+        renderVacancies(vacancies);
 
-        if (vacancies.length === 0) {
-          container.innerHTML = "<p style='text-align:center;color:#333;'>Әлі вакансия жоқ.</p>";
+      } catch (error) {
+        console.error("Қате:", error);
+        alert("Сервермен байланыс үзілді. Кейінірек қайталаңыз.");
+      }
+
+      const searchInput = document.querySelector(".search-bar input");
+      const searchBtn = document.querySelector(".search-btn");
+
+      searchBtn.addEventListener("click", () => {
+        const query = searchInput.value.trim().toLowerCase();
+        const filtered = vacancies.filter(vac => vac.title.toLowerCase().includes(query));
+        renderVacancies(filtered);
+      });
+      searchInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          searchBtn.click();
+        }
+      });
+
+      function renderVacancies(list) {
+        container.innerHTML = "";
+        if (list.length === 0) {
+          container.innerHTML = "<p style='text-align:center;color:#333;'>Вакансия табылмады.</p>";
           return;
         }
 
-        vacancies.forEach(vac => {
+        list.forEach(vac => {
           const card = document.createElement("div");
           card.className = "vacancy-card";
           card.innerHTML = `
@@ -81,13 +105,9 @@
           `;
           container.appendChild(card);
         });
-
-      } catch (error) {
-        console.error("Қате:", error);
-        alert("Сервермен байланыс үзілді. Кейінірек қайталаңыз.");
       }
+
     });
 </script>
-
 </body>
 </html>
