@@ -11,7 +11,7 @@
     <h1>Кіру</h1>
 
     <form class="login-form" onsubmit="login(event)">
-        <input type="text" name="username" placeholder="Толық аты" required />
+        <input type="text" name="email" placeholder="email" required />
         <div class="password-field">
             <input type="password" name="password" placeholder="Құпиясөз" required />
         </div>
@@ -31,7 +31,7 @@
   event.preventDefault();
 
   const user = {
-    fullName: document.querySelector('input[name="username"]').value,
+    email: document.querySelector('input[name="email"]').value,
     passwordHash: document.querySelector('input[name="password"]').value
   };
 

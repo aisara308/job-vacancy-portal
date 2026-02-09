@@ -45,8 +45,8 @@ public class UserController {
                     .body(Map.of("error", "Unauthorized"));
         }
 
-        String fullName = authentication.getName();
-        Users user = service.findByFullName(fullName);
+        String Email = authentication.getName();
+        Users user = service.findByEmail(Email);
 
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -63,8 +63,8 @@ public class UserController {
                     .body(Map.of("error", "Unauthorized"));
         }
 
-        String fullName = authentication.getName();
-        boolean deleted = service.deleteByFullName(fullName);
+        String Email = authentication.getName();
+        boolean deleted = service.deleteByEmail(Email);
 
         if (deleted) {
             return ResponseEntity.ok(Map.of("message", "Аккаунт жойылды"));

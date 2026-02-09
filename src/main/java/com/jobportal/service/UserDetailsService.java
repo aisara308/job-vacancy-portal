@@ -15,13 +15,14 @@ public class UserDetailsService implements org.springframework.security.core.use
     private UserRepo repo;
 
     @Override
-    public UserDetails loadUserByUsername(String fullName) throws UsernameNotFoundException {
-        Users user = repo.findByFullName(fullName);
+    public UserDetails loadUserByUsername(String email)
+            throws UsernameNotFoundException {
 
-        if(user==null){
-            System.out.println("User not found");
-            throw new UsernameNotFoundException("user not found");
-        }
+        Users user = repo.findByEmail(email)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found with email: " + email)
+                );
+
         return new UserPrincipal(user);
     }
 }
