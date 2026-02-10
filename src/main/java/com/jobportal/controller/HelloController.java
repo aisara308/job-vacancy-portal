@@ -46,4 +46,9 @@ public class HelloController {
         return "profile";
     }
 
+    @GetMapping("/homeem")
+    public String homeemployerPage() {
+        return "homeem";
+    }
+
 }

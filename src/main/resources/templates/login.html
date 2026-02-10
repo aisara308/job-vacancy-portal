@@ -47,7 +47,13 @@
 
     if (response.ok && token && token !== "fail") {
       localStorage.setItem("token", token);
-      window.location.href = "/home";
+      localStorage.setItem("userType", data.userType);
+      if (data.userType === "employer") {
+        window.location.href = "/homeem";
+        }
+      else if (data.userType === "applicant"){
+        window.location.href = "/home";
+        }
     } else {
       alert("Қате логин немесе құпиясөз!");
     }

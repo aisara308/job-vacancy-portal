@@ -32,11 +32,24 @@ public class UserController {
 
     @PostMapping("/login")
     public Map<String, String> login(@RequestBody Users user) {
+
         String token = service.verify(user);
+
         Map<String, String> response = new HashMap<>();
+
+        if ("fail".equals(token)) {
+            response.put("token", "fail");
+            return response;
+        }
+
+        Users dbUser = service.findByEmail(user.getEmail());
+
         response.put("token", token);
+        response.put("userType", dbUser.getUserType()); // ✅ ВОТ ОНО
+
         return response;
     }
+
 
     @GetMapping("/api/user")
     public ResponseEntity<?> getUserInfo(Authentication authentication) {
