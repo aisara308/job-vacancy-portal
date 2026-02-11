@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="kk" xmlns:th="http://www.thymeleaf.org">
+<footer class="bottom-nav" th:fragment="footer">
+
+    <a th:href="@{/homeem}" class="nav-link">
+        <img th:src="@{/images/search.png}" alt="Іздеу" class="nav-icon">
+    </a>
+
+    <a th:href="@{/responseem}" class="nav-link-mail">
+        <img th:src="@{/images/mail.png}" alt="Хабарламалар" class="nav-icon">
+    </a>
+
+    <a th:href="@{/chatem}" class="nav-link notification">
+        <img th:src="@{/images/chat.png}" alt="Чат" class="nav-icon">
+        <span class="dot"></span>
+    </a>
+
+    <a th:href="@{/profileem}" class="nav-link">
+        <img th:src="@{/images/user.png}" alt="Профиль" class="nav-icon">
+    </a>
+
+</footer>
+</html>

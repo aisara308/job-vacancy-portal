@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface VacancyRepo extends JpaRepository<Vacancies, Long> {
     List<Vacancies> findByStatus(String status);
+    List<Vacancies> findByEmployerId(Integer employerId);
 }

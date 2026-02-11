@@ -19,7 +19,7 @@
 <div id="all" class="content">
     <h2>Осы бет бос</h2>
     <p>Сізге арналған вакансиялар тізімін қарап шығыңыз</p>
-    <button class="btn">Вакансия іздеу</button>
+    <a th:href="@{/home}" class="btn">Вакансия іздеу</a>
 </div>
 
 <div id="waiting" class="content hidden">
@@ -56,5 +56,7 @@
       });
     });
 </script>
+<link rel="stylesheet" th:href="@{/css/footer.css}">
+<div th:replace="navigation :: footer"></div>
 </body>
 </html>

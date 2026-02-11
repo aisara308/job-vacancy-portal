@@ -51,4 +51,24 @@ public class HelloController {
         return "homeem";
     }
 
+    @GetMapping("/responseem")
+    public String responseemployerPage() {
+        return "responseem";
+    }
+
+    @GetMapping("/chatem")
+    public String chatemployerPage() {
+        return "chatem";
+    }
+
+    @GetMapping("/profileem")
+    public String profileemployerPage() {
+        return "profileem";
+    }
+
+    @GetMapping("/vacancy")
+    public String vacancyPage() {
+        return "vacancy";
+    }
+
 }

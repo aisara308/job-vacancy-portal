@@ -35,7 +35,7 @@ public class SecurityConfig {
                                 "/",
                                 "/register",
                                 "/login",
-                                "/response", "/home", "/homeem", "/chat", "/profile", "/resume", "/resume/**","/resume-edit",
+                                "/response", "/responseem", "/home", "/homeem", "/chat", "/chatem", "/profile", "/profileem", "/resume", "/vacancy", "/resume/**","/resume-edit", "/vacancy/**", "/vacancies", "/vacancies/**", "/vacancy-edit",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**"

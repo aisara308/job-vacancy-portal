@@ -1,44 +1,111 @@
 <!DOCTYPE html>
-<html lang="kk" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="kk" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frontend-разработчик</title>
-    <link rel="stylesheet" th:href="@{/css/vacancy.css}">
+    <title>Вакансия қосу</title>
+    <link rel="stylesheet" th:href="@{/css/resume.css}">
 </head>
 <body>
-<div class="vacancy-page">
-    <div class="left">
-        <h2 class="title">Frontend-разработчик</h2>
-        <p class="salary">700 000 - 1 000 000 тг</p>
+<div class="resume-container">
+    <h2>Вакансия қосу</h2>
+    <form id="vacancyForm" class="resume-form">
+        <label>Атауы</label>
+        <input type="text" name="title" placeholder="Мысалы: Java Developer" required>
 
-        <button class="responded-btn">1 адам<br>жауап берді</button>
+        <label>Жалақыдан</label>
+        <input type="number" step="0.01" name="salaryFrom">
 
-        <p class="info">город Астана — Полная занятость — Опыт работы 1 год — Удаленная работа</p>
-        <p class="date">Опубликовано 13 октября</p>
+        <label>Жалақыға дейін</label>
+        <input type="number" step="0.01" name="salaryTo">
 
-        <button class="apply-btn">Жауап беру</button>
-    </div>
-    <div class="right">
-        <div class="scroll-box">
-            <h3>Обязанности (Что из этого, дальше посмотрим):</h3>
-            <p>
-                Разработка и поддержка веб-платформы с интеграцией искусственного интеллекта<br><br>
-                Проектирование архитектуры системы с векторными базами данных<br><br>
-                Создание API для взаимодействия фронтенда с ИИ-сервисами<br><br>
-                Интеграция машинного обучения моделей в веб-приложение<br><br>
-                Оптимизация производительности векторного поиска<br><br>
-                Участие в планировании технических решений и выборе стека технологий
-            </p>
-            <h3>Требования (Что из этого, дальше додумаем):</h3>
-            <p>
-                Знание Python (Django/FastAPI) или Node.js/Java Spring Boot<br><br>
-                Опыт работы с векторными базами данных (Milvus, Qdrant, ChromaDB)<br><br>
-                Понимание принципов машинного обучения и работы с embedding’ами<br><br>
-                Знание современных фронтенд фреймворков (React, Vue или Angular)
-            </p>
-        </div>
-    </div>
+        <label>Тәжірибе</label>
+        <input type="text" name="experience">
+
+        <label>Орналасқан жері</label>
+        <input type="text" name="location">
+
+        <label>Адрес</label>
+        <input type="text" name="adres">
+
+        <label>Жұмыс кестесі</label>
+        <input type="text" name="schedule">
+
+        <label>Төлем мерзімі</label>
+        <input type="text" name="paymentTime">
+
+        <label>
+            Қашықтан:
+            <input type="checkbox" name="remote" value="true">
+        </label>
+
+        <label>
+            Студенттер үшін:
+            <input type="checkbox" name="forStudents" value="true">
+        </label>
+
+        <label>Талаптар</label>
+        <textarea name="requirements" rows="4"></textarea>
+
+        <button type="submit" class="create-btn">Құру</button>
+    </form>
 </div>
+
+<script>
+    document.getElementById("vacancyForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("Кіру қажет!");
+            window.location.href = "/login";
+            return;
+        }
+
+        try {
+            const userRes = await fetch("/api/user", {
+                headers: { "Authorization": "Bearer " + token },
+            });
+
+            if (!userRes.ok) {
+                alert("Қолданушы табылмады немесе токен жарамсыз!");
+                return;
+            }
+
+            const user = await userRes.json();
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            // Преобразование типов
+            data.remote = !!data.remote;
+            data.forStudents = !!data.forStudents;
+            if (data.salaryFrom) data.salaryFrom = parseFloat(data.salaryFrom);
+            if (data.salaryTo) data.salaryTo = parseFloat(data.salaryTo);
+
+            data.employerId = user.userId; // связываем с пользователем
+
+            const res = await fetch("/vacancies/add", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (res.ok) {
+                window.location.href = "/profileem";
+            } else {
+                const text = await res.text();
+                alert("Қате: " + text);
+            }
+
+        } catch (err) {
+            console.error("Қате:", err);
+            alert("Сервер қатесі немесе желіде ақау бар");
+        }
+    });
+
+</script>
 </body>
 </html>

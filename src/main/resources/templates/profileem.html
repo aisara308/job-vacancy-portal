@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="kk" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Профиль</title>
+    <link rel="stylesheet" href="/css/footer.css">
+    <link rel="stylesheet" th:href="@{/css/profile.css}" />
+</head>
+<body>
+
+<header class="profile-header">
+    <div class="profile-info">
+        <img th:src="@{/images/avatar.png}" alt="Аватар">
+        <div class="profile-text">
+            <div class="user-header">
+                <h2 id="userName">Жүктелуде...</h2>
+                <button class="delete-account-btn" onclick="deleteAccount()">
+                    <img src="/images/delete.png" alt="Жою" class="icon">
+                </button>
+            </div>
+            <p id="userCreated">Жасалған күні: -</p>
+        </div>
+
+    </div>
+    <button class="trash-btn" onclick="openTrash()">
+        Себет
+        <img th:src="@{/images/delete.png}" alt="Себет" class="icon">
+    </button>
+</header>
+
+<main class="resume-section">
+    <div class="resume-header">
+        <h3>Менің вакансияларым <span class="vacancies-count">(0)</span></h3>
+    </div>
+
+    <div class="resume-list" id="vacanciesList">
+        <p>Вакансиялар жүктелуде...</p>
+    </div>
+
+    <div style="height: 20px;"></div>
+
+    <a th:href="@{/vacancy}" class="create-btn">Жаңа вакансия жасау
+        <img th:src="@{/images/add.png}" alt="Қосу" class="icon">
+    </a>
+</main>
+
+<div class="logout-btn" onclick="logout()">
+    <img th:src="@{/images/logout.png}" alt="Шығу" class="icon">Шығу
+</div>
+
+<div id="trashModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeTrash()">&times;</span>
+        <h3>Себет (Жойылған вакансиялар)</h3>
+        <div id="trashList"></div>
+    </div>
+</div>
+
+
+<div th:replace="navigation :: footer"></div>
+
+<script>
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Кіру қажет!");
+      window.location.href = "/login";
+    } else {
+      fetch("/api/user", { headers: { "Authorization": "Bearer " + token }})
+        .then(res => res.json())
+        .then(async user => {
+            document.getElementById("userName").textContent = user.fullName || "Белгісіз";
+            document.getElementById("userCreated").textContent =
+             "Жасалған күні: " + (user.createdAt ? new Date(user.createdAt).toLocaleDateString("kk-KZ") : "-");
+
+            loadVacancies(user.userId);
+        });
+    }
+
+    async function loadVacancies(userId) {
+        const res = await fetch(`/vacancies/user/${userId}`, {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const vacancies = await res.json();
+        const container = document.getElementById("vacanciesList");
+        document.querySelector(".vacancies-count").textContent = `(${vacancies.length})`;
+
+        if (vacancies.length === 0) {
+            container.innerHTML = "<p>Әзірге вакансия жоқ.</p>";
+        } else {
+            container.innerHTML = vacancies.map(v => `
+              <div class="vacancies-card">
+                <h4>${v.title || "Атаусыз вакансия"}</h4>
+                <p>${v.location || ""}</p>
+                <div class="tags">
+                  <span class="tag">${v.experience || "Тәжірибе жоқ"}</span>
+                  <span class="tag">${v.schedule || "Кесте белгісіз"}</span>
+                  <span class="tag">Жалақы: ${v.salaryFrom ? v.salaryFrom + " - " + v.salaryTo : "Көрсетілмеген"}</span>
+                </div>
+                <p style="color: #b63a3a;">Төлем мерзімі: ${v.paymentTime || "-"}</p>
+                <div class="vacancy-actions">
+                  <button class="edit-btn" onclick="editVacancy(${v.vacancyId})">
+                    <img src="/images/editWhite.png" class="icon">
+                  </button>
+                  <button class="delete-btn" onclick="deleteVacancy(${v.vacancyId})">
+                    <img src="/images/delete.png" class="icon">
+                  </button>
+                </div>
+              </div>
+            `).join("");
+        }
+    }
+
+    function deleteVacancy(id) {
+        if (!confirm("Сіз шынымен вакансияны жойғыңыз келе ме?")) return;
+        fetch(`/vacancies/delete/${id}`, {
+            method: "PUT",
+            headers: { "Authorization": "Bearer " + token }
+        })
+        .then(() => loadVacanciesFromServer())
+        .catch(() => alert("Сервер қатесі!"));
+    }
+
+    function editVacancy(id) {
+        window.location.href = `/vacancy/edit/${id}`;
+    }
+
+    // Перезагрузка списка вакансий
+    async function loadVacanciesFromServer() {
+        const userRes = await fetch("/api/user", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const user = await userRes.json();
+        loadVacancies(user.userId);
+    }
+
+    function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+    }
+
+    function deleteAccount() {
+        if (confirm("Сіз шынымен аккаунтыңызды жойғыңыз келе ме? Бұл әрекет қайтымсыз.")) {
+            fetch("/delete", {
+                method: "DELETE",
+                headers: { "Authorization": "Bearer " + token }
+            })
+            .then(res => {
+                if (res.ok) {
+                    localStorage.removeItem("token");
+                    window.location.href = "/login";
+                } else {
+                    alert("Қате! Аккаунт жойылмады.");
+                }
+            })
+            .catch(() => alert("Сервер қате қайтарды."));
+        }
+    }
+</script>
+
+
+</body>
+</html>
