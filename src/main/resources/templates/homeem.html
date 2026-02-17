@@ -1,13 +1,113 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="kk" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
-    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <title>Резюмелер</title>
+    <link rel="stylesheet" href="/css/footer.css">
+    <link rel="stylesheet" th:href="@{/css/home.css}" />
 </head>
 <body>
 
+<header class="top-bar">
+    <h2 class="logo">Резюмелер</h2>
+    <div class="search-bar">
+        <input type="text" placeholder="Іздеу...">
+        <button class="search-btn"><img th:src="@{/images/searchRed.png}" alt="Іздеу" class="icon"></button>
+        <button class="filter-btn"><img th:src="@{/images/filter.png}" alt="Фильтр" class="icon"></button>
+    </div>
+</header>
+
+<main class="vacancies-container"></main>
+
 <div th:replace="navigation :: footer"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            alert("Кіру қажет!");
+            window.location.href = "/login";
+            return;
+        }
+
+        let resumes = [];
+        const container = document.querySelector(".vacancies-container");
+
+        try {
+        console.log("TOKEN:", token);
+            const response = await fetch("/api/homeem", {
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            });
+
+            if (!response.ok) {
+                console.error("Ошибка при загрузке резюме:", response.status);
+                if (response.status === 403 || response.status === 401) {
+                    alert("Сессия аяқталды. Қайта кіріңіз.");
+                    localStorage.removeItem("token");
+                    window.location.href = "/login";
+                }
+                return;
+            }
+
+            const data = await response.json();
+            resumes = data.resumes || [];
+            renderResumes(resumes);
+
+        } catch (error) {
+            console.error("Қате:", error);
+            alert("Сервермен байланыс үзілді. Кейінірек қайталаңыз.");
+        }
+
+        const searchInput = document.querySelector(".search-bar input");
+        const searchBtn = document.querySelector(".search-btn");
+
+        searchBtn.addEventListener("click", () => {
+            const query = searchInput.value.trim().toLowerCase();
+            const filtered = resumes.filter(res => res.name.toLowerCase().includes(query));
+            renderResumes(filtered);
+        });
+        searchInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                searchBtn.click();
+            }
+        });
+
+        function renderResumes(list) {
+    container.innerHTML = "";
+    if (list.length === 0) {
+        container.innerHTML = "<p style='text-align:center;color:#333;'>Резюме табылмады.</p>";
+        return;
+    }
+
+    list.forEach(res => {
+        const card = document.createElement("div");
+        card.className = "vacancy-card";
+        card.innerHTML = `
+            <div class="vacancy-header">
+                <span class="icon"><img src="/images/user.png" alt="Резюме" class="icon"></span>
+                <h3>${res.title || res.user?.fullName || "-"}</h3>
+                <span class="like"><button class="like-btn"><img src="/images/thumbUp.png" alt="Лайк" class="icon"></button></span>
+            </div>
+            <p class="date">Соңғы өзгеріс: ${res.createdAt ? res.createdAt.substring(0, 10) : "-"}</p>
+            <p class="company"><img src="/images/address.png" alt="Қала" class="icon"> ${res.location || "-"}</p>
+            <div class="tags">
+                ${res.education?.toLowerCase().includes("студент") ? "<span>Студент</span>" : ""}
+                ${res.schedule?.toLowerCase().includes("қашықтан") ? "<span>Қашықтан</span>" : ""}
+            </div>
+            <div class="salary">
+              ${res.salaryExpectation ? res.salaryExpectation + " ₸" : ""}
+            </div>
+            <p class="responses"><span>0</span> компания қызықтырады</p>
+            <button class="apply-btn">Байланысу ➤</button>
+        `;
+        container.appendChild(card);
+    });
+}
+    });
+</script>
 
 </body>
 </html>

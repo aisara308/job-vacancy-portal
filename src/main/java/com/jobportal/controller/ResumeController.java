@@ -2,13 +2,18 @@ package com.jobportal.controller;
 
 import com.jobportal.model.Resumes;
 import com.jobportal.model.Users;
+import com.jobportal.model.Vacancies;
 import com.jobportal.repository.ResumeRepo;
 import com.jobportal.repository.UserRepo;
+import com.jobportal.service.ResumeService;
+import com.jobportal.service.VacancyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/resume")
@@ -19,6 +24,16 @@ public class ResumeController {
 
     @Autowired
     private UserRepo userRepo;
+
+    @Autowired
+    private ResumeService resumeService;
+
+    @GetMapping("/resumes")
+    public String getResumes(Model model) {
+        List<Resumes> resumes = resumeService.getAllActiveResumes();
+        model.addAttribute("resumes", resumes);
+        return "homeem";
+    }
 
     @GetMapping
     public String showForm(Model model) {

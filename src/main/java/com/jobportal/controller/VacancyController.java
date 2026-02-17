@@ -38,6 +38,7 @@ public class VacancyController {
     }
 
     @PostMapping("/add")
+    @ResponseBody
     public ResponseEntity<?> addVacancy(@RequestBody VacancyController.VacancyRequest vacancyData) {
         try {
             // Найдем пользователя по ID (который прислал фронт)

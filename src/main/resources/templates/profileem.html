@@ -30,7 +30,7 @@
 
 <main class="resume-section">
     <div class="resume-header">
-        <h3>Менің вакансияларым <span class="vacancies-count">(0)</span></h3>
+        <h3>Менің вакансияларым <span class="resume-count">(0)</span></h3>
     </div>
 
     <div class="resume-list" id="vacanciesList">
@@ -83,13 +83,13 @@
         });
         const vacancies = await res.json();
         const container = document.getElementById("vacanciesList");
-        document.querySelector(".vacancies-count").textContent = `(${vacancies.length})`;
+        document.querySelector(".resume-count").textContent = `(${vacancies.length})`;
 
         if (vacancies.length === 0) {
             container.innerHTML = "<p>Әзірге вакансия жоқ.</p>";
         } else {
             container.innerHTML = vacancies.map(v => `
-              <div class="vacancies-card">
+              <div class="resume-card">
                 <h4>${v.title || "Атаусыз вакансия"}</h4>
                 <p>${v.location || ""}</p>
                 <div class="tags">
@@ -98,7 +98,7 @@
                   <span class="tag">Жалақы: ${v.salaryFrom ? v.salaryFrom + " - " + v.salaryTo : "Көрсетілмеген"}</span>
                 </div>
                 <p style="color: #b63a3a;">Төлем мерзімі: ${v.paymentTime || "-"}</p>
-                <div class="vacancy-actions">
+                <div class="resume-actions">
                   <button class="edit-btn" onclick="editVacancy(${v.vacancyId})">
                     <img src="/images/editWhite.png" class="icon">
                   </button>
