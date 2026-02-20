@@ -55,11 +55,11 @@
         window.location.href = "/home";
         }
     } else {
-      alert("Қате логин немесе құпиясөз!");
+      alert(data.message || "Қате орын алды!");
     }
   } catch (err) {
     console.error(err);
-    alert("Қате орын алды!");
+    alert("Серверге қосылу мүмкін болмады");
   }
 }
 </script>

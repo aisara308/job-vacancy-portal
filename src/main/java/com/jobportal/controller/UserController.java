@@ -34,20 +34,22 @@ public class UserController {
 
     @PostMapping("/login")
     public Map<String, String> login(@RequestBody Users user) {
-
-        String token = service.verify(user);
-
+        String result = service.verify(user);
         Map<String, String> response = new HashMap<>();
 
-        if ("fail".equals(token)) {
-            response.put("token", "fail");
-            return response;
+        switch(result) {
+            case "wrong_password":
+                response.put("message", "Қате құпиясөз");
+                break;
+            case "user_not_found":
+                response.put("message", "Пайдаланушы табылмады");
+                break;
+            default:
+                Users dbUser = service.findByEmail(user.getEmail());
+                response.put("token", result);
+                response.put("userType", dbUser.getUserType());
+                break;
         }
-
-        Users dbUser = service.findByEmail(user.getEmail());
-
-        response.put("token", token);
-        response.put("userType", dbUser.getUserType()); // ✅ ВОТ ОНО
 
         return response;
     }

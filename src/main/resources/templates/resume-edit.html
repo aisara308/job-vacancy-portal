@@ -40,7 +40,6 @@
 
                 <label>Білімі</label>
                 <select name="education" id="education">
-                    <option value="">Таңдаңыз</option>
                     <option value="Орта">Орта</option>
                     <option value="Жоғары">Жоғары</option>
                     <option value="Колледж">Колледж</option>
@@ -98,7 +97,6 @@
         });
 
         if (res.ok) {
-            alert("Резюме сәтті жаңартылды!");
             window.location.href = "/profile";
         } else {
             alert("Қате орын алды!");

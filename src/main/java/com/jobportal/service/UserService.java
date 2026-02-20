@@ -43,14 +43,27 @@ public class UserService {
 
 
     public String verify(Users user) {
-        Authentication authentication =
-                authManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPasswordHash()));
-
-        if(authentication.isAuthenticated()){
-            return jwtService.generateToken(user.getEmail());
+        Users dbUser = repo.findByEmail(user.getEmail()).orElse(null);
+        if (dbUser == null) {
+            return "user_not_found";
         }
-        return "fail";
+
+        try {
+            Authentication authentication =
+                    authManager.authenticate(
+                            new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPasswordHash()));
+
+            if (authentication.isAuthenticated()) {
+                return jwtService.generateToken(user.getEmail());
+            } else {
+                return "fail";
+            }
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            return "wrong_password";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "fail";
+        }
     }
 
     public Users findByEmail(String email) {
