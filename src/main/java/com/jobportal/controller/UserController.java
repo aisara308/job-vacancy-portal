@@ -20,12 +20,14 @@ public class UserController {
     public Map<String, String> register(@RequestBody Users user) {
         System.out.println(">>> REGISTER CALLED: " + user);
         String token = service.register(user);
+        Users dbUser = service.findByEmail(user.getEmail());
 
         Map<String, String> response = new HashMap<>();
         if (token == null) {
             response.put("token", "Registration failed");
         } else {
             response.put("token", token);
+            response.put("userType", dbUser.getUserType());
         }
         return response;
     }

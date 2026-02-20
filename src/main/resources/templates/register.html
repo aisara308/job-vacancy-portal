@@ -76,7 +76,13 @@
 
         if (response.ok && token && token !== "Registration failed") {
           localStorage.setItem("token", token);
+          localStorage.setItem("userType", data.userType);
+          if (data.userType === "employer") {
+          window.location.href = "/homeem";
+          }
+          else if (data.userType === "applicant"){
           window.location.href = "/home";
+          }
         } else {
           alert("Тіркелу сәтсіз аяқталды!");
         }

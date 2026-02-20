@@ -71,4 +71,9 @@ public class HelloController {
         return "vacancy";
     }
 
+    @GetMapping("/information")
+    public String informationPage() {
+        return "information";
+    }
+
 }

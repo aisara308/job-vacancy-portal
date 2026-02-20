@@ -1,8 +1,10 @@
 package com.jobportal.controller;
 
+import com.jobportal.model.Jobapplications;
 import com.jobportal.model.Resumes;
 import com.jobportal.model.Users;
 import com.jobportal.model.Vacancies;
+import com.jobportal.repository.JobapplicationsRepo;
 import com.jobportal.repository.ResumeRepo;
 import com.jobportal.repository.UserRepo;
 import com.jobportal.repository.VacancyRepo;
@@ -12,10 +14,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/vacancies")
@@ -23,6 +27,12 @@ public class VacancyController {
 
     @Autowired
     private VacancyRepo vacancyRepo;
+
+    @Autowired
+    private ResumeRepo resumeRepo;
+
+    @Autowired
+    private JobapplicationsRepo jobapplicationsRepo;
 
     @Autowired
     private UserRepo userRepo;
@@ -69,6 +79,48 @@ public class VacancyController {
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }
+
+    @GetMapping("/{vacancyId}")
+    @ResponseBody
+    public ResponseEntity<?> getVacancyById(@PathVariable Long vacancyId) {
+        try {
+            Vacancies vacancy = vacancyRepo.findById(vacancyId)
+                    .orElseThrow(() -> new RuntimeException("Вакансия табылмады"));
+            return ResponseEntity.ok(vacancy);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Қате: " + e.getMessage());
+        }
+    }
+    @GetMapping("/applications/my")
+    @ResponseBody
+    public ResponseEntity<?> getApplicationsForMyVacancies(Authentication authentication) {
+        try {
+            // Берём email текущего пользователя
+            String username = authentication.getName();
+
+            // Находим пользователя (работодателя) по email
+            Users employer = userRepo.findByEmail(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Получаем все вакансии этого работодателя
+            List<Vacancies> myVacancies = vacancyRepo.findByEmployerId(employer.getUserId().intValue());
+
+            // Собираем ID вакансий
+            List<Integer> vacancyIds = myVacancies.stream()
+                    .map(v -> v.getVacancyId().intValue()) // преобразуем Long в Integer
+                    .collect(Collectors.toList());
+
+            // Получаем все заявки на эти вакансии
+            List<Jobapplications> applications = jobapplicationsRepo.findByVacancyIdIn(vacancyIds);
+
+            return ResponseEntity.ok(applications);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Қате: " + e.getMessage());
+        }
+    }
+
 
     @GetMapping("/user/{userId}")
     @ResponseBody

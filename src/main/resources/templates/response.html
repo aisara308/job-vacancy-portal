@@ -16,46 +16,112 @@
     <button class="tab" data-tab="invited">Шақыру</button>
 </div>
 
-<div id="all" class="content">
-    <h2>Осы бет бос</h2>
-    <p>Сізге арналған вакансиялар тізімін қарап шығыңыз</p>
-    <a th:href="@{/home}" class="btn">Вакансия іздеу</a>
-</div>
-
-<div id="waiting" class="content hidden">
-    <h2>Жауап күтуде</h2>
-    <p>Сіздің өтінішіңіз қарастырылуда.</p>
-</div>
-
-<div id="declined" class="content hidden">
-    <h2>Бас тартылды</h2>
-    <p>Өкінішке орай, бұл вакансияға өтініш қабылданбады.</p>
-</div>
-
-<div id="interview" class="content hidden">
-    <h2>Сұхбат</h2>
-    <p>Сізге сұхбатқа шақыру бар!</p>
-</div>
-
-<div id="invited" class="content hidden">
-    <h2>Шақыру</h2>
-    <p>Сізге жаңа ұсыныс келді!</p>
-</div>
+<div id="all" class="content"></div>
+<div id="waiting" class="content hidden"></div>
+<div id="declined" class="content hidden"></div>
+<div id="interview" class="content hidden"></div>
+<div id="invited" class="content hidden"></div>
 
 <script>
+    const token = localStorage.getItem("token");
+    if (!token) {
+        alert("Кіру қажет!");
+        window.location.href = "/login";
+    }
+
+    // Вкладки переключение
     const tabs = document.querySelectorAll('.tab');
     const contents = document.querySelectorAll('.content');
 
     tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
 
-        contents.forEach(c => c.classList.add('hidden'));
-        document.getElementById(tab.dataset.tab).classList.remove('hidden');
-      });
+            contents.forEach(c => c.classList.add('hidden'));
+            const target = document.getElementById(tab.dataset.tab);
+            if (target) target.classList.remove('hidden');
+        });
     });
+
+async function loadApplications() {
+    try {
+        const res = await fetch("/applications/my", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const applications = await res.json();
+
+        const statusMap = {
+            pending: "waiting",
+            declined: "declined",
+            interview: "interview",
+            invited: "invited"
+        };
+
+        const containers = {
+            all: document.getElementById("all"),
+            waiting: document.getElementById("waiting"),
+            declined: document.getElementById("declined"),
+            interview: document.getElementById("interview"),
+            invited: document.getElementById("invited")
+        };
+
+        // Очистка контейнеров перед добавлением карточек
+        Object.values(containers).forEach(c => c.innerHTML = "");
+
+        if (applications.length === 0) {
+            containers.all.innerHTML = `<h2>Осы бет бос</h2>
+                <p>Сізге арналған вакансиялар тізімін қарап шығыңыз</p>
+                <a th:href="@{/home}" class="btn">Вакансия іздеу</a>`;
+        }
+
+        // Пробегаемся по всем откликам
+        for (const app of applications) {
+            let vacancyData = {};
+            if (app.vacancyId) {
+                try {
+                    const vacRes = await fetch(`/vacancies/${app.vacancyId}`, {
+                        headers: { "Authorization": "Bearer " + token }
+                    });
+                    if (vacRes.ok) {
+                        vacancyData = await vacRes.json();
+                    }
+                } catch (err) {
+                    console.warn("Вакансия табылмады для id:", app.vacancyId);
+                }
+            }
+
+            const card = document.createElement("div");
+            card.className = "application-card";
+
+            let statusText = "";
+            if (app.status === "pending") statusText = "Жауап күтуде";
+            else if (app.status === "declined") statusText = "Бас тартылды";
+            else if (app.status === "interview") statusText = "Сұхбат";
+            else statusText = "Шақыру";
+
+            card.innerHTML = `
+                <div class="status-label ${app.status}">${statusText}</div>
+                <h4>${vacancyData.title || app.vacancyTitle || "Вакансия"}</h4>
+                <p>${vacancyData.adres || app.adres || ""}, ${vacancyData.location || app.location || ""}</p>
+                <p>${vacancyData.salaryFrom || vacancyData.salaryTo ?
+                    "Жалақы: " + (vacancyData.salaryFrom || "") + " - " + (vacancyData.salaryTo || "") : ""}</p>
+                <p class="date">${app.appliedAt ? new Date(app.appliedAt).toLocaleDateString("kk-KZ") : ""}</p>
+            `;
+
+            containers.all.appendChild(card.cloneNode(true));
+            const tabId = statusMap[app.status];
+            if (tabId) containers[tabId].appendChild(card.cloneNode(true));
+        }
+
+    } catch (err) {
+        console.error(err);
+        alert("Қате! Жауаптар жүктелмеді.");
+    }
+}
+    loadApplications();
 </script>
+
 <link rel="stylesheet" th:href="@{/css/footer.css}">
 <div th:replace="index :: footer"></div>
 </body>

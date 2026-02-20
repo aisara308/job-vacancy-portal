@@ -24,6 +24,7 @@ public class HomeController {
     private ResumeService resumeService;
 
     @GetMapping("/home")
+    @ResponseBody
     public ResponseEntity<?> getUserInfo(Authentication authentication) {
         if (authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -41,6 +42,7 @@ public class HomeController {
     }
 
     @GetMapping("/homeem")
+    @ResponseBody
     public ResponseEntity<?> getUserInformation(Authentication authentication) {
         if (authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
