@@ -74,8 +74,32 @@
                 searchBtn.click();
             }
         });
+function openPublicResumeModal(resume) {
+    document.getElementById("publicModalTitle").textContent = resume.title || "-";
+    document.getElementById("publicModalLocation").textContent = resume.location || "-";
+    document.getElementById("publicModalExperience").textContent =
+        resume.experience ? resume.experience + " жыл" : "-";
+    document.getElementById("publicModalEducation").textContent = resume.education || "-";
+    document.getElementById("publicModalSchedule").textContent = resume.schedule || "-";
+    document.getElementById("publicModalSalary").textContent =
+        resume.salaryExpectation ? resume.salaryExpectation + " ₸" : "-";
+    document.getElementById("publicModalDescription").textContent =
+        resume.skills || "Сипаттама жоқ";
 
-        function renderResumes(list) {
+    document.getElementById("publicResumeModal").style.display = "flex";
+}
+
+function closePublicResumeModal() {
+    document.getElementById("publicResumeModal").style.display = "none";
+}
+
+window.addEventListener("click", function(e) {
+    const modal = document.getElementById("publicResumeModal");
+    if (e.target === modal) {
+        modal.style.display = "none";
+    }
+});
+    function renderResumes(list) {
     container.innerHTML = "";
     if (list.length === 0) {
         container.innerHTML = "<p style='text-align:center;color:#333;'>Резюме табылмады.</p>";
@@ -94,8 +118,9 @@
             <p class="date">Соңғы өзгеріс: ${res.createdAt ? res.createdAt.substring(0, 10) : "-"}</p>
             <p class="company"><img src="/images/address.png" alt="Қала" class="icon"> ${res.location || "-"}</p>
             <div class="tags">
-                ${res.education?.toLowerCase().includes("студент") ? "<span>Студент</span>" : ""}
-                ${res.schedule?.toLowerCase().includes("қашықтан") ? "<span>Қашықтан</span>" : ""}
+                ${res.experience ? `<span>${res.experience} жылдық тәжірибе</span>` : ""}
+                ${res.education ? `<span>${res.education} білім</span>` : ""}
+                ${res.schedule ? `<span>${res.schedule} жұмыс кестесі</span>` : ""}
             </div>
             <div class="salary">
               ${res.salaryExpectation ? res.salaryExpectation + " ₸" : ""}
@@ -103,11 +128,53 @@
             <p class="responses"><span>0</span> компания қызықтырады</p>
             <button class="apply-btn">Байланысу ➤</button>
         `;
+        card.addEventListener("click", () => openPublicResumeModal(res));
         container.appendChild(card);
     });
 }
     });
 </script>
+<div id="publicResumeModal" class="modal" style="display:none;">
+    <div class="resume-modal-content">
+        <div class="resume-modal-header">
+            <h2 id="publicModalTitle"></h2>
+            <span class="close" onclick="closePublicResumeModal()">&times;</span>
+        </div>
 
+        <div class="resume-modal-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Локация</label>
+                    <p id="publicModalLocation"></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Тәжірибе</label>
+                    <p id="publicModalExperience"></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Білім</label>
+                    <p id="publicModalEducation"></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Жұмыс кестесі</label>
+                    <p id="publicModalSchedule"></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Жалақы</label>
+                    <p id="publicModalSalary" class="salary"></p>
+                </div>
+            </div>
+
+            <div class="description-block">
+                <label>Дағдылар / Сипаттама</label>
+                <p id="publicModalDescription"></p>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

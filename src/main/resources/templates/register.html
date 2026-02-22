@@ -13,7 +13,10 @@
     <form class="login-form" onsubmit="register(event)">
         <input id="fullName" placeholder="Аты" required>
         <input id="email" placeholder="Пошта" required>
-        <input id="passwordHash" placeholder="Құпиясөз" type="password" required>
+        <div class="password-field">
+            <input type="password" name="password" placeholder="Құпиясөз" required id="passwordHash">
+            <button type="button" class="eye-btn" id="toggleLoginPassword" tabindex="-1">👁️</button>
+        </div>
 
         <div class="user-type">
             <label><input type="radio" name="userType" value="applicant" required> Ізденуші</label>
@@ -31,66 +34,76 @@
 </div>
 
 <script>
-    async function register(event) {
-      event.preventDefault();
+    const togglePwdLogin = document.getElementById("toggleLoginPassword");
+    const pwdInputLogin = document.getElementById("passwordHash");
 
-      const fullName = document.getElementById("fullName").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("passwordHash").value.trim();
-      const userType = document.querySelector('input[name="userType"]:checked')?.value;
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        alert("Поштаны дұрыс форматта енгізіңіз! Мысалы: example@gmail.com");
-        return;
-      }
-
-      const nameParts = fullName.split(/\s+/);
-      if (nameParts.length < 2) {
-        alert("Толық аты-жөніңізді енгізіңіз (мысалы: Аян Ермекұлы немесе Аян Қуаныш Ермекұлы).");
-        return;
-      }
-
-      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-={}[\]|:;"'<>,.?/~`]).{8,}$/;
-      if (!passwordRegex.test(password)) {
-        alert("Құпиясөз тым әлсіз! Кем дегенде 8 таңба, бір әріп, бір сан және бір арнайы таңба болуы керек.");
-        return;
-      }
-
-      if (!userType) {
-        alert("Пайдаланушы түрін таңдаңыз!");
-        return;
-      }
-
-      const user = { fullName, email, passwordHash: password, userType };
-
-      try {
-        const response = await fetch("/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(user)
-        });
-
-        const data = await response.json();
-        const token = data.token;
-
-        if (response.ok && token && token !== "Registration failed") {
-          localStorage.setItem("token", token);
-          localStorage.setItem("userType", data.userType);
-          if (data.userType === "employer") {
-          window.location.href = "/homeem";
-          }
-          else if (data.userType === "applicant"){
-          window.location.href = "/home";
-          }
+    togglePwdLogin.addEventListener("click", () => {
+        if (pwdInputLogin.type === "password") {
+            pwdInputLogin.type = "text";
         } else {
-          alert("Тіркелу сәтсіз аяқталды!");
+            pwdInputLogin.type = "password";
         }
-      } catch (err) {
-        console.error(err);
-        alert("Қате орын алды!");
-      }
-    }
+    });
+        async function register(event) {
+          event.preventDefault();
+
+          const fullName = document.getElementById("fullName").value.trim();
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("passwordHash").value.trim();
+          const userType = document.querySelector('input[name="userType"]:checked')?.value;
+
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+            alert("Поштаны дұрыс форматта енгізіңіз! Мысалы: example@gmail.com");
+            return;
+          }
+
+          const nameParts = fullName.split(/\s+/);
+          if (nameParts.length < 2) {
+            alert("Толық аты-жөніңізді енгізіңіз (мысалы: Аян Ермекұлы немесе Аян Қуаныш Ермекұлы).");
+            return;
+          }
+
+          const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-={}[\]|:;"'<>,.?/~`]).{8,}$/;
+          if (!passwordRegex.test(password)) {
+            alert("Құпиясөз тым әлсіз! Кем дегенде 8 таңба, бір әріп, бір сан және бір арнайы таңба болуы керек.");
+            return;
+          }
+
+          if (!userType) {
+            alert("Пайдаланушы түрін таңдаңыз!");
+            return;
+          }
+
+          const user = { fullName, email, passwordHash: password, userType };
+
+          try {
+            const response = await fetch("/register", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(user)
+            });
+
+            const data = await response.json();
+            const token = data.token;
+
+            if (response.ok && token && token !== "Registration failed") {
+              localStorage.setItem("token", token);
+              localStorage.setItem("userType", data.userType);
+              if (data.userType === "employer") {
+              window.location.href = "/homeem";
+              }
+              else if (data.userType === "applicant"){
+              window.location.href = "/home";
+              }
+            } else {
+              alert("Тіркелу сәтсіз аяқталды!");
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Қате орын алды!");
+          }
+        }
 </script>
 </body>
 </html>

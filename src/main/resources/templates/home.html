@@ -79,7 +79,40 @@
         searchInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") searchBtn.click();
         });
+// открытие модалки
+function openVacancyModal(vacancy) {
+    document.getElementById("vacancyTitle").textContent = vacancy.title || "-";
+    document.getElementById("vacancyLocation").textContent = vacancy.adres || "-";
+    document.getElementById("vacancyExperience").textContent = vacancy.experience || "-";
+    document.getElementById("vacancySchedule").textContent = vacancy.schedule || "-";
+    document.getElementById("vacancySalary").textContent = vacancy.salaryFrom && vacancy.salaryTo
+        ? vacancy.salaryFrom + " - " + vacancy.salaryTo
+        : "Көрсетілмеген";
+    document.getElementById("vacancyAddress").textContent = vacancy.adres || "-";
+    document.getElementById("vacancyPayment").textContent = vacancy.paymentTime || "-";
+    document.getElementById("vacancyRemote").textContent = vacancy.remote ? "Иә" : "Жоқ";
+    document.getElementById("vacancyForStudents").textContent = vacancy.forStudents ? "Иә" : "Жоқ";
+    document.getElementById("vacancyRequirements").textContent = vacancy.requirements || "-";
 
+    document.getElementById("vacancyModal").style.display = "flex";
+}
+
+// закрытие модалки
+function closeVacancyModal() {
+    document.getElementById("vacancyModal").style.display = "none";
+}
+
+// крестик
+document.getElementById("closeVacancyModal").onclick = closeVacancyModal;
+
+// клик вне окна
+window.onclick = function(event) {
+    const modal = document.getElementById("vacancyModal");
+    const modalContent = document.getElementById("vacancyModalContent");
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+};
         async function renderVacancies(list) {
             container.innerHTML = "";
             if (list.length === 0) {
@@ -90,6 +123,7 @@
             list.forEach(vac => {
                 const card = document.createElement("div");
                 card.className = "vacancy-card";
+                card.addEventListener("click", () => openVacancyModal(vac));
                 card.innerHTML = `
                     <div class="vacancy-header">
                         <span class="icon"><img src="/images/job.png" alt="Вакансия" class="icon"></span>
@@ -131,7 +165,8 @@
             const applyButtons = document.querySelectorAll(".apply-btn");
 
             applyButtons.forEach(btn => {
-    btn.addEventListener("click", async () => {
+    btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
         const vacancyId = btn.getAttribute("data-id");
 
         try {
@@ -215,6 +250,59 @@
         }
     });
 </script>
+<!-- Модалка вакансии -->
+<div id="vacancyModal" class="modal" style="display:none;">
+    <div class="resume-modal-content" id="vacancyModalContent">
+        <!-- Хедер с крестиком -->
+        <div class="resume-modal-header">
+            <h2 id="vacancyTitle">Загрузка...</h2>
+            <span class="close" id="closeVacancyModal">&times;</span>
+        </div>
 
+        <!-- Тело модалки с сеткой информации -->
+        <div class="resume-modal-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Локация</label>
+                    <p id="vacancyLocation">-</p>
+                </div>
+                <div class="info-item">
+                    <label>Тәжірибе</label>
+                    <p id="vacancyExperience">-</p>
+                </div>
+                <div class="info-item">
+                    <label>Жұмыс кестесі</label>
+                    <p id="vacancySchedule">-</p>
+                </div>
+                <div class="info-item">
+                    <label>Жалақы</label>
+                    <p id="vacancySalary">-</p>
+                </div>
+                <div class="info-item">
+                    <label>Мекенжай</label>
+                    <p id="vacancyAddress">-</p>
+                </div>
+                <div class="info-item">
+                    <label>Төлем мерзімі</label>
+                    <p id="vacancyPayment">-</p>
+                </div>
+                <div class="info-item">
+                    <label>Қашықтан</label>
+                    <p id="vacancyRemote">-</p>
+                </div>
+                <div class="info-item">
+                    <label>Студенттерге жарамды</label>
+                    <p id="vacancyForStudents">-</p>
+                </div>
+            </div>
+
+            <!-- Блок описания вакансии -->
+            <div class="description-block">
+                <label>Талаптар / Сипаттама</label>
+                <p id="vacancyRequirements">-</p>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

@@ -89,7 +89,7 @@
             container.innerHTML = "<p>Әзірге вакансия жоқ.</p>";
         } else {
             container.innerHTML = vacancies.map(v => `
-              <div class="resume-card">
+             <div class="resume-card" onclick='openVacancyModal(${JSON.stringify(v)})'>
                 <h4>${v.title || "Атаусыз вакансия"}</h4>
                 <p>${v.location || ""}</p>
                 <div class="tags">
@@ -110,7 +110,36 @@
             `).join("");
         }
     }
+// Открытие модалки с деталями вакансии
+function openVacancyModal(vacancy) {
+    document.getElementById("modalVacancyTitle").textContent = vacancy.title || "Аты жоқ";
+    document.getElementById("modalVacancyLocation").textContent = vacancy.location || "-";
+    document.getElementById("modalVacancyExperience").textContent = vacancy.experience || "-";
+    document.getElementById("modalVacancySchedule").textContent = vacancy.schedule || "-";
+    document.getElementById("modalVacancySalary").textContent = vacancy.salary_from && vacancy.salary_to
+        ? vacancy.salary_from + " - " + vacancy.salary_to
+        : "Көрсетілмеген";
+    document.getElementById("modalVacancyAddress").textContent = vacancy.adres || "-";
+    document.getElementById("modalVacancyPayment").textContent = vacancy.payment_time || "-";
+    document.getElementById("modalVacancyRemote").textContent = vacancy.remote ? "Иә" : "Жоқ";
+    document.getElementById("modalVacancyForStudents").textContent = vacancy.for_students ? "Иә" : "Жоқ";
+    document.getElementById("modalVacancyRequirements").textContent = vacancy.requirements || "-";
+window.onclick = function(event) {
+    const modal = document.getElementById("vacancyModal");
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+}
+    // Кнопки редактирования/удаления
+    document.getElementById("modalEditBtn").onclick = () => editVacancy(vacancy.vacancy_id);
+    document.getElementById("modalDeleteBtn").onclick = () => deleteVacancy(vacancy.vacancy_id);
 
+    document.getElementById("vacancyModal").style.display = "flex";
+}
+
+function closeVacancyModal() {
+    document.getElementById("vacancyModal").style.display = "none";
+}
     function deleteVacancy(id) {
         if (!confirm("Сіз шынымен вакансияны жойғыңыз келе ме?")) return;
         fetch(`/vacancies/delete/${id}`, {
@@ -157,7 +186,58 @@
         }
     }
 </script>
-
-
+<!-- Подробная модалка вакансии -->
+<div id="vacancyModal" class="modal">
+    <div class="resume-modal-content">
+        <div class="resume-modal-header">
+            <h2 id="modalVacancyTitle">Загрузка...</h2>
+            <span class="close" onclick="closeVacancyModal()">&times;</span>
+        </div>
+        <div class="resume-modal-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Локация</label>
+                    <p id="modalVacancyLocation"></p>
+                </div>
+                <div class="info-item">
+                    <label>Тәжірибе</label>
+                    <p id="modalVacancyExperience"></p>
+                </div>
+                <div class="info-item">
+                    <label>Жұмыс кестесі</label>
+                    <p id="modalVacancySchedule"></p>
+                </div>
+                <div class="info-item">
+                    <label>Жалақы</label>
+                    <p id="modalVacancySalary" class="salary"></p>
+                </div>
+                <div class="info-item">
+                    <label>Мекенжай</label>
+                    <p id="modalVacancyAddress"></p>
+                </div>
+                <div class="info-item">
+                    <label>Төлем мерзімі</label>
+                    <p id="modalVacancyPayment"></p>
+                </div>
+                <div class="info-item">
+                    <label>Қашықтан</label>
+                    <p id="modalVacancyRemote"></p>
+                </div>
+                <div class="info-item">
+                    <label>Студенттерге жарамды</label>
+                    <p id="modalVacancyForStudents"></p>
+                </div>
+            </div>
+            <div class="description-block">
+                <label>Талаптар / Сипаттама</label>
+                <p id="modalVacancyRequirements"></p>
+            </div>
+        </div>
+        <div class="resume-modal-footer left-actions">
+            <button class="modal-edit" id="modalEditBtn" onclick="event.stopPropagation(); editVacancy(${v.vacancyId})">Өңдеу</button>
+            <button class="modal-delete" id="modalDeleteBtn" onclick="event.stopPropagation(); deleteVacancy(${v.vacancyId})">Жою</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
