@@ -11,14 +11,14 @@
 <div class="tabs">
     <button class="tab active" data-tab="all">Барлығы</button>
     <button class="tab" data-tab="pending">Жауап күтуде</button>
-    <button class="tab" data-tab="interview">Сұхбат</button>
-    <button class="tab" data-tab="invited">Қабылданды</button>
+    <button class="tab" data-tab="interview">Шақыру</button>
+    <button class="tab" data-tab="interview">Қабылданды</button>
 </div>
 
-<div id="all" class="content"></div>
-<div id="pending" class="content hidden"></div>
-<div id="interview" class="content hidden"></div>
-<div id="invited" class="content hidden"></div>
+<div id="all" class="content"><div class="cards"></div></div>
+<div id="pending" class="content hidden"><div class="cards"></div></div>
+<div id="interv" class="content hidden"><div class="cards"></div></div>
+<div id="interview" class="content hidden"><div class="cards"></div></div>
 
 <script>
     const token = localStorage.getItem("token");
@@ -27,7 +27,6 @@
         window.location.href = "/login";
     }
 
-    // Вкладки переключение через hidden
     const tabs = document.querySelectorAll('.tab');
     const contents = document.querySelectorAll('.content');
 
@@ -42,11 +41,36 @@
         });
     });
 
+   async function updateStatus(applicationId, newStatus) {
+    console.log("ID:", applicationId);
+    console.log("STATUS:", newStatus);
+
+    const res = await fetch(`/applications/${applicationId}/status`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({ status: newStatus })
+    });
+
+    console.log("RESPONSE STATUS:", res.status);
+
+    if (!res.ok) {
+        const text = await res.text();
+        console.log("SERVER RESPONSE:", text);
+        throw new Error("Ошибка обновления");
+    }
+
+    loadEmployerApplications();
+}
+
     async function loadEmployerApplications() {
         try {
             const res = await fetch("/vacancies/applications/my", {
                 headers: { "Authorization": "Bearer " + token }
             });
+
             const applications = await res.json();
 
             const statusMap = {
@@ -56,31 +80,28 @@
             };
 
             const containers = {
-                all: document.getElementById("all"),
-                pending: document.getElementById("pending"),
-                interview: document.getElementById("interview"),
-                invited: document.getElementById("invited"),
+                all: document.querySelector("#all .cards"),
+                pending: document.querySelector("#pending .cards"),
+                interview: document.querySelector("#interview .cards"),
+                interview: document.querySelector("#interview .cards"),
             };
 
-            // Очистка контейнеров перед добавлением карточек
-            Object.values(containers).forEach(c => { if(c) c.innerHTML = ""; });
+            Object.values(containers).forEach(c => { if (c) c.innerHTML = ""; });
 
             if (!applications || applications.length === 0) {
-                if(containers.all) {
-                    containers.all.innerHTML = `<h2>Қазіргі уақытта өтініштер жоқ</h2>
-                        <p>Қатысушылар өтініш жібере салысымен олар мұнда көрінеді</p>`;
-                }
+                containers.all.innerHTML = `<h2>Қазіргі уақытта өтініштер жоқ</h2>`;
                 return;
             }
 
             for (const app of applications) {
+
                 const card = document.createElement("div");
                 card.className = "application-card";
 
                 let statusText = "";
                 if (app.status === "pending") statusText = "Жауап күтуде";
                 else if (app.status === "interview") statusText = "Сұхбат";
-                else if (app.status === "invited") statusText = "Қабылданды";
+                else if (app.status === "interview") statusText = "Қабылданды";
 
                 card.innerHTML = `
                     <div class="status-label ${app.status}">${statusText}</div>
@@ -88,12 +109,25 @@
                     <p><strong>Қатысушы:</strong> ${app.userName || "Атауы жоқ"}</p>
                     <p>${app.location || ""}</p>
                     <p class="date">${app.appliedAt ? new Date(app.appliedAt).toLocaleDateString("kk-KZ") : ""}</p>
+
+                    ${app.status === "pending" ? `
+                        <div class="action-buttons">
+                            <button class="accept-btn">Қабылдау</button>
+                            <button class="reject-btn">Қабылдамау</button>
+                        </div>
+                    ` : ""}
                 `;
 
-                // Добавляем в all
-                if(containers.all) containers.all.appendChild(card);
+                if (app.status === "pending") {
+                card.querySelector(".accept-btn")
+                .addEventListener("click", () => updateStatus(app.applicationId, "interview"));
 
-                // Добавляем клон в статусную вкладку, только если контейнер существует
+                card.querySelector(".reject-btn")
+                .addEventListener("click", () => updateStatus(app.applicationId, "rejected"));
+}
+
+                containers.all.appendChild(card);
+
                 const tabId = statusMap[app.status];
                 if (tabId && containers[tabId]) {
                     containers[tabId].appendChild(card.cloneNode(true));

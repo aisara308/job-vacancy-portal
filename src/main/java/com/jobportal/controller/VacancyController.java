@@ -92,6 +92,8 @@ public class VacancyController {
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }
+
+
     @GetMapping("/applications/my")
     @ResponseBody
     public ResponseEntity<?> getApplicationsForMyVacancies(Authentication authentication) {

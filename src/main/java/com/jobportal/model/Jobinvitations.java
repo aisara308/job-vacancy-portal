@@ -9,8 +9,8 @@ public class Jobinvitations {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "application_id")
-    private Integer applicationId;
+    @Column(name = "invitation_id")
+    private Integer invitationId;
 
     @Column(name = "resume_id", nullable = false)
     private Integer resumeId;
@@ -18,26 +18,26 @@ public class Jobinvitations {
     @Column(name = "vacancy_id", nullable = false)
     private Integer vacancyId;
 
-    @Column(name = "applicant_id", nullable = false)
-    private Integer applicantId;
+    @Column(name = "employer_id", nullable = false)
+    private Integer employerId;
 
     @Column(name = "status", length = 20)
     private String status;
 
-    @Column(name = "applied_at")
-    private LocalDateTime appliedAt;
+    @Column(name = "sent_at")
+    private LocalDateTime sentAt;
 
     public Jobinvitations() {
     }
 
     // ===== Getters & Setters =====
 
-    public Integer getApplicationId() {
-        return applicationId;
+    public Integer getInvitationId() {
+        return invitationId;
     }
 
-    public void setApplicationId(Integer applicationId) {
-        this.applicationId = applicationId;
+    public void setInvitationId(Integer invitationId) {
+        this.invitationId = invitationId;
     }
 
     public Integer getResumeId() {
@@ -56,12 +56,12 @@ public class Jobinvitations {
         this.vacancyId = vacancyId;
     }
 
-    public Integer getApplicantId() {
-        return applicantId;
+    public Integer getEmployerId() {
+        return employerId;
     }
 
-    public void setApplicantId(Integer applicantId) {
-        this.applicantId = applicantId;
+    public void setEmployerId(Integer employerId) {
+        this.employerId = employerId;
     }
 
     public String getStatus() {
@@ -72,11 +72,11 @@ public class Jobinvitations {
         this.status = status;
     }
 
-    public LocalDateTime getAppliedAt() {
-        return appliedAt;
+    public LocalDateTime getSentAt() {
+        return sentAt;
     }
 
-    public void setAppliedAt(LocalDateTime appliedAt) {
-        this.appliedAt = appliedAt;
+    public void setSentAt(LocalDateTime sentAt) {
+        this.sentAt = sentAt;
     }
 }

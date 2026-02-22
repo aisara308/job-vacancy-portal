@@ -44,6 +44,60 @@ public class JobapplicationsController {
         return ResponseEntity.ok("Application created");
     }
 
+    @PostMapping("/add/hired")
+    @ResponseBody
+    public ResponseEntity<?> applyhired(@RequestBody Jobapplications application,
+                                   Authentication authentication) {
+
+        String username = authentication.getName(); // email или логин
+
+        // Находим пользователя
+        Users user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        application.setApplicantId(user.getUserId().intValue());
+
+        application.setStatus("hired");
+        application.setAppliedAt(LocalDateTime.now());
+
+        repository.save(application);
+
+        return ResponseEntity.ok("Application created");
+    }
+
+    @PutMapping("/{applicationId}/status")
+    @ResponseBody
+    public ResponseEntity<?> updateStatus(
+            @PathVariable Integer applicationId,
+            @RequestBody StatusUpdateRequest request,
+            Authentication authentication
+    ) {
+        try {
+
+            String username = authentication.getName();
+
+            Users employer = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Jobapplications jobapplication = repository.findById(applicationId)
+                    .orElseThrow(() -> new RuntimeException("Application not found"));
+
+            if (!java.util.List.of("pending", "interview", "invited", "rejected")
+                    .contains(request.getStatus())) {
+                return ResponseEntity.badRequest().body("Invalid status");
+            }
+
+            jobapplication.setStatus(request.getStatus());
+            repository.save(jobapplication);
+
+            return ResponseEntity.ok("Status updated");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Қате: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/my")
     @ResponseBody
     public ResponseEntity<?> getMyApplications(Authentication authentication) {
@@ -59,6 +113,18 @@ public class JobapplicationsController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
+        }
+    }
+
+    public static class StatusUpdateRequest {
+        private String status;
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
         }
     }
 

@@ -11,16 +11,16 @@
 <div class="tabs">
     <button class="tab active" data-tab="all">Барлығы</button>
     <button class="tab" data-tab="waiting">Жауап күтуде</button>
-    <button class="tab" data-tab="declined">Бас тартылды</button>
+    <button class="tab" data-tab="rejected">Бас тартылды</button>
     <button class="tab" data-tab="interview">Сұхбат</button>
     <button class="tab" data-tab="invited">Шақыру</button>
 </div>
 
-<div id="all" class="content"></div>
-<div id="waiting" class="content hidden"></div>
-<div id="declined" class="content hidden"></div>
-<div id="interview" class="content hidden"></div>
-<div id="invited" class="content hidden"></div>
+<div id="all" class="content"><div class="cards"></div></div>
+<div id="waiting" class="content hidden"><div class="cards"></div></div>
+<div id="rejected" class="content hidden"><div class="cards"></div></div>
+<div id="interview" class="content hidden"><div class="cards"></div></div>
+<div id="invited" class="content hidden"><div class="cards"></div></div>
 
 <script>
     const token = localStorage.getItem("token");
@@ -53,18 +53,18 @@ async function loadApplications() {
 
         const statusMap = {
             pending: "waiting",
-            declined: "declined",
+            rejected: "rejected",
             interview: "interview",
             invited: "invited"
         };
 
         const containers = {
-            all: document.getElementById("all"),
-            waiting: document.getElementById("waiting"),
-            declined: document.getElementById("declined"),
-            interview: document.getElementById("interview"),
-            invited: document.getElementById("invited")
-        };
+    all: document.querySelector("#all .cards"),
+    waiting: document.querySelector("#waiting .cards"),
+    rejected: document.querySelector("#rejected .cards"),
+    interview: document.querySelector("#interview .cards"),
+    invited: document.querySelector("#invited .cards")
+};
 
         // Очистка контейнеров перед добавлением карточек
         Object.values(containers).forEach(c => c.innerHTML = "");
@@ -96,7 +96,7 @@ async function loadApplications() {
 
             let statusText = "";
             if (app.status === "pending") statusText = "Жауап күтуде";
-            else if (app.status === "declined") statusText = "Бас тартылды";
+            else if (app.status === "rejected") statusText = "Бас тартылды";
             else if (app.status === "interview") statusText = "Сұхбат";
             else statusText = "Шақыру";
 
