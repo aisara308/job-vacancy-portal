@@ -61,6 +61,7 @@
 
 <script>
     const token = localStorage.getItem("token");
+    let currentResumeId = null;
 
     if (!token) {
       alert("Кіру қажет!");
@@ -89,28 +90,68 @@
             container.innerHTML = "<p>Әзірге резюме жоқ.</p>";
         } else {
             container.innerHTML = resumes.map(r => `
-              <div class="resume-card">
-                <h4>${r.title || "Атаусыз резюме"}</h4>
-                <p>${r.location || ""}</p>
-                <div class="tags">
-                  <span class="tag">${r.experience || "Тәжірибе жоқ"}</span>
-                  <span class="tag">${r.education || "Білім көрсетілмеген"}</span>
-                  <span class="tag">${r.schedule || "Кесте белгісіз"}</span>
-                </div>
-                <p style="color: #b63a3a;">Жалақы: ${r.salaryExpectation || "Көрсетілмеген"}</p>
-                <div class="resume-actions">
-                  <button class="edit-btn" onclick="editResume(${r.resumeId})">
-                    <img src="/images/editWhite.png" class="icon">
-                  </button>
-                  <button class="delete-btn" onclick="moveToTrash(${r.resumeId})">
-                    <img src="/images/delete.png" class="icon">
-                  </button>
-                </div>
-              </div>
-            `).join("");
+  <div class="resume-card" onclick='openResumeModal(${JSON.stringify(r)})'>
+    <h4>${r.title || "Атаусыз резюме"}</h4>
+    <p>${r.location || ""}</p>
+    <div class="tags">
+      <span class="tag">${r.experience + " жылдық тәжирібе"|| "Тәжірибе жоқ"}</span>
+      <span class="tag">${r.education + " білім"|| "Білім көрсетілмеген"}</span>
+      <span class="tag">${r.schedule +" жұмыс кестесі"|| "Кесте белгісіз"}</span>
+    </div>
+    <p style="color: #b63a3a;">Жалақы: ${r.salaryExpectation + " ₸"|| "Көрсетілмеген"}</p>
+    <div class="resume-actions">
+      <button class="edit-btn" onclick="event.stopPropagation(); editResume(${r.resumeId})">
+        <img src="/images/editWhite.png" class="icon">
+      </button>
+      <button class="delete-btn" onclick="event.stopPropagation(); moveToTrash(${r.resumeId})">
+        <img src="/images/delete.png" class="icon">
+      </button>
+    </div>
+  </div>
+`).join("");
         }
     }
+function openResumeModal(resume) {
+    currentResumeId = resume.resumeId;
 
+    document.getElementById("modalTitle").textContent = resume.title || "Атаусыз резюме";
+    document.getElementById("modalLocation").textContent = resume.location || "-";
+    document.getElementById("modalExperience").textContent =
+        resume.experience ? resume.experience + " жыл" : "-";
+    document.getElementById("modalEducation").textContent = resume.education || "-";
+    document.getElementById("modalSchedule").textContent = resume.schedule || "-";
+    document.getElementById("modalSalary").textContent =
+        resume.salaryExpectation ? resume.salaryExpectation + " ₸" : "-";
+    document.getElementById("modalDescription").textContent =
+        resume.skills || "Сипаттама жоқ";
+
+    document.getElementById("resumeModal").style.display = "flex";
+}
+function modalEditResume() {
+    if (currentResumeId) {
+        window.location.href = `/resume/update/${currentResumeId}`;
+    }
+}
+
+function modalDeleteResume() {
+    if (currentResumeId && confirm("Жоюды растайсыз ба?")) {
+        fetch(`/resume/delete/${currentResumeId}`, { method: "PUT" })
+            .then(() => {
+                closeResumeModal();
+                location.reload();
+            });
+    }
+}
+function closeResumeModal() {
+    document.getElementById("resumeModal").style.display = "none";
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById("resumeModal");
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+}
     function moveToTrash(id)  {
             fetch(`/resume/delete/${id}`, { method: "PUT" })
             .then(() => location.reload());
@@ -197,6 +238,58 @@
     }
 }
 </script>
+<div id="resumeModal" class="modal">
+    <div class="resume-modal-content">
+        <div class="resume-modal-header">
+            <h2 id="modalTitle"></h2>
+            <span class="close" onclick="closeResumeModal()">&times;</span>
+        </div>
 
+        <div class="resume-modal-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Локация</label>
+                    <p id="modalLocation"></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Тәжірибе</label>
+                    <p id="modalExperience"></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Білім</label>
+                    <p id="modalEducation"></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Жұмыс кестесі</label>
+                    <p id="modalSchedule"></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Жалақы</label>
+                    <p id="modalSalary" class="salary"></p>
+                </div>
+            </div>
+
+            <div class="description-block">
+                <label>Дағдылар / Сипаттама</label>
+                <p id="modalDescription"></p>
+            </div>
+        </div>
+
+        <div class="resume-modal-footer">
+            <div class="left-actions">
+                <button class="modal-edit" onclick="modalEditResume()">
+                    Өзгерту
+                </button>
+                <button class="modal-delete" onclick="modalDeleteResume()">
+                    Жою
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

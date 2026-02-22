@@ -129,3 +129,38 @@ input,
 .signup-link:hover {
   text-decoration: underline;
 }
+
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.password-field input {
+  padding-right: 2.5rem; /* чтобы кнопка не перекрывала текст */
+}
+
+.eye-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #1a1a1a;
+  padding: 0;
+}
+
+.forgot-link {
+  display: block;
+  text-align: left;
+  font-size: 0.8rem;
+  color: #ffffff80;
+  margin-top: 0.3rem;
+  text-decoration: none;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}

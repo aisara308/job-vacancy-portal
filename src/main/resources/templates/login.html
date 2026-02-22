@@ -13,7 +13,15 @@
     <form class="login-form" onsubmit="login(event)">
         <input type="text" name="email" placeholder="email" required />
         <div class="password-field">
-            <input type="password" name="password" placeholder="Құпиясөз" required />
+            <input type="password" name="password" placeholder="Құпиясөз" required id="loginPassword">
+            <button type="button" class="eye-btn" id="toggleLoginPassword" tabindex="-1">👁️</button>
+        </div>
+
+        <a href="/reset-password" class="forgot-link">Құпиясөзді ұмыттыңыз ба?</a>
+
+        <div id="resetPasswordDiv" style="display:none;">
+            <input type="email" id="resetEmail" placeholder="Поштаны енгізіңіз">
+            <button id="sendReset">Сбросить пароль</button>
         </div>
         <button type="submit" class="login-btn">Кіру</button>
     </form>
@@ -27,6 +35,7 @@
     </p>
 </div>
 <script>
+
     async function login(event) {
   event.preventDefault();
 
@@ -62,6 +71,48 @@
     alert("Серверге қосылу мүмкін болмады");
   }
 }
+    // Показать/скрыть пароль
+const togglePwdLogin = document.getElementById("toggleLoginPassword");
+const pwdInputLogin = document.getElementById("loginPassword");
+
+togglePwdLogin.addEventListener("click", () => {
+    if (pwdInputLogin.type === "password") {
+        pwdInputLogin.type = "text";
+    } else {
+        pwdInputLogin.type = "password";
+    }
+});
+
+// Забыли пароль
+document.getElementById("forgotPasswordLink").addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("resetPasswordDiv").style.display = "block";
+});
+
+// Отправка запроса на сброс
+document.getElementById("sendReset").addEventListener("click", async () => {
+    const email = document.getElementById("resetEmail").value.trim();
+    if (!email) return alert("Почту енгізіңіз");
+
+    try {
+        const response = await fetch("/reset-password", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+
+        if (response.ok) {
+            alert("Сілтеме поштаға жіберілді немесе уақытша пароль орнатылды.");
+            document.getElementById("resetPasswordDiv").style.display = "none";
+        } else {
+            const err = await response.text();
+            alert("Қате: " + err);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Сервермен байланыс жоқ.");
+    }
+});
 </script>
 
 </body>

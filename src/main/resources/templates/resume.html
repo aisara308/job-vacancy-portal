@@ -14,8 +14,17 @@
                 <label>Мамандық</label>
                 <input type="text" name="title" placeholder="Мамандықты енгізіңіз" required>
 
+                <label>Тәжірибе</label>
+                <div class="input-group">
+                    <input type="number" name="experience" placeholder="0" required>
+                    <span class="input-suffix">жыл</span>
+                </div>
+
                 <label>Қалаған жалақы</label>
-                <input type="number" step="0.01" name="salaryExpectation" placeholder="Мысалы: 250000">
+                <div class="input-group">
+                    <input type="number" name="salaryExpectation" placeholder="Мысалы: 250000">
+                    <span class="input-suffix">₸</span>
+                </div>
 
                 <label>Жұмыс кестесі</label>
                 <select name="schedule">
@@ -41,7 +50,7 @@
                 <label>Алған білім</label>
                 <select name="education">
                     <option value="">Таңдаңыз</option>
-                    <option value="Орта">Орта</option>
+                    <option value="Орта">Мектеп</option>
                     <option value="Жоғары">Жоғары</option>
                     <option value="Колледж">Колледж</option>
                 </select>

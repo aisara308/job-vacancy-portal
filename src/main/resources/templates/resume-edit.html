@@ -14,8 +14,17 @@
                 <label>Мамандық</label>
                 <input type="text" name="title" id="title" required>
 
+                <label>Тәжірибе</label>
+                <div class="input-group">
+                    <input type="number" name="experience" id="experience" placeholder="0" required>
+                    <span class="input-suffix">жыл</span>
+                </div>
+
                 <label>Қалаған жалақы</label>
-                <input type="number" step="0.01" name="salaryExpectation" id="salaryExpectation">
+                <div class="input-group">
+                    <input type="number" name="salaryExpectation" id="salaryExpectation" placeholder="Мысалы: 250000">
+                    <span class="input-suffix">₸</span>
+                </div>
 
                 <label>Жұмыс кестесі</label>
                 <select name="schedule" id="schedule">
@@ -70,6 +79,7 @@
             const data = await res.json();
 
             document.getElementById("title").value = data.title || "";
+            document.getElementById("experience").value = data.experience || "";
             document.getElementById("salaryExpectation").value = data.salaryExpectation || "";
             document.getElementById("schedule").value = data.schedule || "";
             document.getElementById("paymentTime").value = data.paymentTime || "";
