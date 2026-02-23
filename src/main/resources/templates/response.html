@@ -10,17 +10,70 @@
 
 <div class="tabs">
     <button class="tab active" data-tab="all">Барлығы</button>
-    <button class="tab" data-tab="waiting">Жауап күтуде</button>
+    <button class="tab" data-tab="pending">Жауап күтуде</button>
     <button class="tab" data-tab="rejected">Бас тартылды</button>
     <button class="tab" data-tab="interview">Сұхбат</button>
     <button class="tab" data-tab="invited">Шақыру</button>
 </div>
 
 <div id="all" class="content"><div class="cards"></div></div>
-<div id="waiting" class="content hidden"><div class="cards"></div></div>
+<div id="pending" class="content hidden"><div class="cards"></div></div>
 <div id="rejected" class="content hidden"><div class="cards"></div></div>
 <div id="interview" class="content hidden"><div class="cards"></div></div>
 <div id="invited" class="content hidden"><div class="cards"></div></div>
+
+<!-- Модальное окно для деталей вакансии -->
+<div id="vacancyModal" class="modal">
+    <div class="resume-modal-content">
+        <div class="resume-modal-header">
+            <h2 id="modalVacancyTitle">Жүктелуде...</h2>
+            <span class="close" onclick="closeVacancyModal()">&times;</span>
+        </div>
+        <div class="resume-modal-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Локация</label>
+                    <p id="modalVacancyLocation"></p>
+                </div>
+                <div class="info-item">
+                    <label>Тәжірибе</label>
+                    <p id="modalVacancyExperience"></p>
+                </div>
+                <div class="info-item">
+                    <label>Жұмыс кестесі</label>
+                    <p id="modalVacancySchedule"></p>
+                </div>
+                <div class="info-item">
+                    <label>Жалақы</label>
+                    <p id="modalVacancySalary" class="salary"></p>
+                </div>
+                <div class="info-item">
+                    <label>Мекенжай</label>
+                    <p id="modalVacancyAddress"></p>
+                </div>
+                <div class="info-item">
+                    <label>Төлем мерзімі</label>
+                    <p id="modalVacancyPayment"></p>
+                </div>
+                <div class="info-item">
+                    <label>Қашықтан</label>
+                    <p id="modalVacancyRemote"></p>
+                </div>
+                <div class="info-item">
+                    <label>Студенттерге жарамды</label>
+                    <p id="modalVacancyForStudents"></p>
+                </div>
+            </div>
+            <div class="description-block">
+                <label>Талаптар / Сипаттама</label>
+                <p id="modalVacancyRequirements"></p>
+            </div>
+        </div>
+        <div class="resume-modal-footer">
+            <!-- Здесь могут быть кнопки, если нужно -->
+        </div>
+    </div>
+</div>
 
 <script>
     const token = localStorage.getItem("token");
@@ -29,7 +82,6 @@
         window.location.href = "/login";
     }
 
-    // Вкладки переключение
     const tabs = document.querySelectorAll('.tab');
     const contents = document.querySelectorAll('.content');
 
@@ -44,82 +96,291 @@
         });
     });
 
-async function loadApplications() {
-    try {
-        const res = await fetch("/applications/my", {
-            headers: { "Authorization": "Bearer " + token }
-        });
-        const applications = await res.json();
+    // Функция для открытия модального окна
+    function openVacancyModal(vacancyData) {
+        console.log("Opening modal with data:", vacancyData);
 
-        const statusMap = {
-            pending: "waiting",
-            rejected: "rejected",
-            interview: "interview",
-            invited: "invited"
-        };
-
-        const containers = {
-    all: document.querySelector("#all .cards"),
-    waiting: document.querySelector("#waiting .cards"),
-    rejected: document.querySelector("#rejected .cards"),
-    interview: document.querySelector("#interview .cards"),
-    invited: document.querySelector("#invited .cards")
-};
-
-        // Очистка контейнеров перед добавлением карточек
-        Object.values(containers).forEach(c => c.innerHTML = "");
-
-        if (applications.length === 0) {
-            containers.all.innerHTML = `<h2>Осы бет бос</h2>
-                <p>Сізге арналған вакансиялар тізімін қарап шығыңыз</p>
-                <a th:href="@{/home}" class="btn">Вакансия іздеу</a>`;
+        if (!vacancyData || Object.keys(vacancyData).length === 0) {
+            console.warn("No vacancy data provided");
+            alert("Вакансия туралы мәліметтер жоқ");
+            return;
         }
 
-        // Пробегаемся по всем откликам
-        for (const app of applications) {
-            let vacancyData = {};
-            if (app.vacancyId) {
-                try {
-                    const vacRes = await fetch(`/vacancies/${app.vacancyId}`, {
-                        headers: { "Authorization": "Bearer " + token }
-                    });
-                    if (vacRes.ok) {
-                        vacancyData = await vacRes.json();
-                    }
-                } catch (err) {
-                    console.warn("Вакансия табылмады для id:", app.vacancyId);
+        // Вакансия атауы
+        document.getElementById("modalVacancyTitle").textContent = vacancyData.title || "Атаусыз вакансия";
+
+        // Локация - бірнеше нұсқаны тексеру
+        document.getElementById("modalVacancyLocation").textContent =
+            vacancyData.location || vacancyData.adres || vacancyData.address || "-";
+
+        // Тәжірибе
+        document.getElementById("modalVacancyExperience").textContent =
+            vacancyData.experience || vacancyData.requiredExperience || "-";
+
+        // Жұмыс кестесі
+        document.getElementById("modalVacancySchedule").textContent =
+            vacancyData.schedule || vacancyData.workSchedule || "-";
+
+        // Жалақы
+        if (vacancyData.salaryFrom && vacancyData.salaryTo) {
+            document.getElementById("modalVacancySalary").textContent =
+                `${vacancyData.salaryFrom} - ${vacancyData.salaryTo}`;
+        } else if (vacancyData.salaryFrom) {
+            document.getElementById("modalVacancySalary").textContent =
+                `от ${vacancyData.salaryFrom}`;
+        } else if (vacancyData.salaryTo) {
+            document.getElementById("modalVacancySalary").textContent =
+                `до ${vacancyData.salaryTo}`;
+        } else if (vacancyData.salary) {
+            document.getElementById("modalVacancySalary").textContent = vacancyData.salary;
+        } else {
+            document.getElementById("modalVacancySalary").textContent = "Көрсетілмеген";
+        }
+
+        // Мекенжай
+        document.getElementById("modalVacancyAddress").textContent =
+            vacancyData.adres || vacancyData.address || vacancyData.location || "-";
+
+        // Төлем мерзімі
+        document.getElementById("modalVacancyPayment").textContent =
+            vacancyData.paymentTime || vacancyData.paymentPeriod || "-";
+
+        // Қашықтан
+        document.getElementById("modalVacancyRemote").textContent =
+            vacancyData.remote === true ? "Иә" : (vacancyData.remote === false ? "Жоқ" : "-");
+
+        // Студенттерге жарамды
+        document.getElementById("modalVacancyForStudents").textContent =
+            vacancyData.forStudents === true ? "Иә" : (vacancyData.forStudents === false ? "Жоқ" : "-");
+
+        // Талаптар / Сипаттама
+        document.getElementById("modalVacancyRequirements").textContent =
+            vacancyData.requirements || vacancyData.description || "-";
+
+        const modal = document.getElementById("vacancyModal");
+        modal.style.display = "flex";
+    }
+
+    function closeVacancyModal() {
+        document.getElementById("vacancyModal").style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById("vacancyModal");
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    // Функция для объединения данных вакансии
+    function mergeVacancyData(vacancyData, itemData) {
+        // Егер vacancyData бос болса, itemData ішінен вакансия деректерін іздеу
+        if (!vacancyData || Object.keys(vacancyData).length === 0) {
+            return itemData.vacancy || itemData;
+        }
+
+        // vacancyData бар болса, оны қайтару
+        return vacancyData;
+    }
+
+    // Функция для создания карточки
+    function createCard(vacancyData, itemData, type, status) {
+        const card = document.createElement("div");
+        card.className = "application-card";
+        card.style.cursor = "pointer";
+
+        // Барлық деректерді біріктіріп сақтау
+        const fullData = mergeVacancyData(vacancyData, itemData);
+        card.setAttribute('data-vacancy', JSON.stringify(fullData));
+
+        let statusText = "";
+        let statusClass = status || "";
+
+        if (type === "application") {
+            if (status === "pending") statusText = "Жауап күтуде";
+            else if (status === "rejected") statusText = "Бас тартылды";
+            else if (status === "interview") statusText = "Сұхбат";
+            else statusText = "Шақыру";
+        } else {
+            statusText = "Шақыру";
+            statusClass = "invited";
+        }
+
+        let salaryHtml = "";
+        if (vacancyData.salaryFrom && vacancyData.salaryTo) {
+            salaryHtml = `<p>Жалақы: ${vacancyData.salaryFrom} - ${vacancyData.salaryTo}</p>`;
+        } else if (vacancyData.salaryFrom) {
+            salaryHtml = `<p>Жалақы: ${vacancyData.salaryFrom}</p>`;
+        } else if (vacancyData.salaryTo) {
+            salaryHtml = `<p>Жалақы: ${vacancyData.salaryTo}</p>`;
+        } else if (itemData.salary) {
+            salaryHtml = `<p>Жалақы: ${itemData.salary}</p>`;
+        }
+
+        const locationText = vacancyData.adres || vacancyData.location || vacancyData.address ||
+                            itemData.adres || itemData.location || itemData.address || "";
+        const titleText = vacancyData.title || itemData.vacancyTitle || itemData.vacancyName || "Вакансия";
+        const date = itemData.appliedAt || itemData.invitedAt || itemData.createdAt || "";
+        const formattedDate = date ? new Date(date).toLocaleDateString("kk-KZ") : "";
+
+        card.innerHTML = `
+            <div class="status-label ${statusClass}">${statusText}</div>
+            <h4>${titleText}</h4>
+            <p>${locationText}</p>
+            ${salaryHtml}
+            ${type === "invitation" ? `<p>${itemData.userName || "Жұмыс беруші"}</p>` : ""}
+            <p class="date">${formattedDate}</p>
+        `;
+
+        card.addEventListener('click', function(event) {
+            event.stopPropagation();
+            const vacancyData = JSON.parse(this.getAttribute('data-vacancy'));
+            console.log("Card clicked, vacancy data:", vacancyData);
+            openVacancyModal(vacancyData);
+        });
+
+        return card;
+    }
+
+    // Основная функция загрузки данных
+    async function loadApplicationsAndInvitations() {
+        try {
+            const userRes = await fetch("/api/user", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+            const user = await userRes.json();
+            console.log("Current user:", user);
+
+            const res = await fetch("/applications/my", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+            const applications = await res.json();
+
+            const invRes = await fetch("/invitations/me", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            let invitations = [];
+            if (!invRes.ok) {
+                const errorText = await invRes.text();
+                console.error("Error loading invitations:", errorText);
+                const invRes2 = await fetch(`/resume/invitations/user/${user.userId}`, {
+                    headers: { "Authorization": "Bearer " + token }
+                });
+                if (invRes2.ok) {
+                    invitations = await invRes2.json();
                 }
+            } else {
+                invitations = await invRes.json();
             }
 
-            const card = document.createElement("div");
-            card.className = "application-card";
+            const containers = {
+                all: document.querySelector("#all .cards"),
+                pending: document.querySelector("#pending .cards"),
+                rejected: document.querySelector("#rejected .cards"),
+                interview: document.querySelector("#interview .cards"),
+                invited: document.querySelector("#invited .cards")
+            };
 
-            let statusText = "";
-            if (app.status === "pending") statusText = "Жауап күтуде";
-            else if (app.status === "rejected") statusText = "Бас тартылды";
-            else if (app.status === "interview") statusText = "Сұхбат";
-            else statusText = "Шақыру";
+            Object.values(containers).forEach(c => c.innerHTML = "");
 
-            card.innerHTML = `
-                <div class="status-label ${app.status}">${statusText}</div>
-                <h4>${vacancyData.title || app.vacancyTitle || "Вакансия"}</h4>
-                <p>${vacancyData.adres || app.adres || ""}, ${vacancyData.location || app.location || ""}</p>
-                <p>${vacancyData.salaryFrom || vacancyData.salaryTo ?
-                    "Жалақы: " + (vacancyData.salaryFrom || "") + " - " + (vacancyData.salaryTo || "") : ""}</p>
-                <p class="date">${app.appliedAt ? new Date(app.appliedAt).toLocaleDateString("kk-KZ") : ""}</p>
-            `;
+            const allItems = [];
 
-            containers.all.appendChild(card.cloneNode(true));
-            const tabId = statusMap[app.status];
-            if (tabId) containers[tabId].appendChild(card.cloneNode(true));
+            // Обработка откликов
+            for (const app of applications) {
+                let vacancyData = {};
+
+                // Вакансия деректерін жүктеу
+                if (app.vacancyId) {
+                    try {
+                        const vacRes = await fetch(`/vacancies/${app.vacancyId}`, {
+                            headers: { "Authorization": "Bearer " + token }
+                        });
+                        if (vacRes.ok) {
+                            vacancyData = await vacRes.json();
+                            console.log(`Vacancy data for application ${app.vacancyId}:`, vacancyData);
+                        } else {
+                            console.warn(`Vacancy ${app.vacancyId} not found, status:`, vacRes.status);
+                        }
+                    } catch (err) {
+                        console.warn("Error loading vacancy for id:", app.vacancyId, err);
+                    }
+                }
+
+                // Егер вакансия деректері жоқ болса, application ішіндегі деректерді қолдану
+                if (Object.keys(vacancyData).length === 0 && app.vacancy) {
+                    vacancyData = app.vacancy;
+                }
+
+                const card = createCard(vacancyData, app, "application", app.status);
+                allItems.push({ card, status: app.status, vacancyData, itemData: app });
+            }
+
+            // Обработка приглашений
+            for (const inv of invitations) {
+                let vacancyData = {};
+
+                if (inv.vacancyId) {
+                    try {
+                        const vacRes = await fetch(`/vacancies/${inv.vacancyId}`, {
+                            headers: { "Authorization": "Bearer " + token }
+                        });
+                        if (vacRes.ok) {
+                            vacancyData = await vacRes.json();
+                            console.log(`Vacancy data for invitation ${inv.vacancyId}:`, vacancyData);
+                        } else {
+                            console.warn(`Vacancy ${inv.vacancyId} not found, status:`, vacRes.status);
+                        }
+                    } catch (err) {
+                        console.warn("Error loading vacancy for id:", inv.vacancyId, err);
+                    }
+                }
+
+                // Егер вакансия деректері жоқ болса, invitation ішіндегі деректерді қолдану
+                if (Object.keys(vacancyData).length === 0 && inv.vacancy) {
+                    vacancyData = inv.vacancy;
+                }
+
+                const card = createCard(vacancyData, inv, "invitation", "invited");
+                allItems.push({ card, status: "invited", vacancyData, itemData: inv });
+            }
+
+            // Добавление карточек в контейнеры
+            if (allItems.length === 0) {
+                containers.all.innerHTML = `<h2>Осы бет бос</h2>
+                    <p>Сізге арналған вакансиялар тізімін қарап шығыңыз</p>
+                    <a href="/home" class="btn">Вакансия іздеу</a>`;
+            } else {
+                allItems.forEach(item => {
+                    // Для all контейнера
+                    const cardForAll = item.card.cloneNode(true);
+                    cardForAll.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                        const vacancyData = JSON.parse(this.getAttribute('data-vacancy'));
+                        openVacancyModal(vacancyData);
+                    });
+                    containers.all.appendChild(cardForAll);
+
+                    // Для контейнера по статусу
+                    if (item.status && containers[item.status]) {
+                        const cardForStatus = item.card.cloneNode(true);
+                        cardForStatus.addEventListener('click', function(event) {
+                            event.stopPropagation();
+                            const vacancyData = JSON.parse(this.getAttribute('data-vacancy'));
+                            openVacancyModal(vacancyData);
+                        });
+                        containers[item.status].appendChild(cardForStatus);
+                    }
+                });
+            }
+
+        } catch (err) {
+            console.error("Error in loadApplicationsAndInvitations:", err);
+            alert("Қате! Жауаптар жүктелмеді.");
         }
-
-    } catch (err) {
-        console.error(err);
-        alert("Қате! Жауаптар жүктелмеді.");
     }
-}
-    loadApplications();
+
+    loadApplicationsAndInvitations();
 </script>
 
 <link rel="stylesheet" th:href="@{/css/footer.css}">

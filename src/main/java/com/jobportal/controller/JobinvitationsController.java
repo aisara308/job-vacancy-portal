@@ -1,9 +1,12 @@
 package com.jobportal.controller;
 
+import com.jobportal.model.Jobapplications;
 import com.jobportal.model.Jobinvitations;
 
+import com.jobportal.model.Resumes;
 import com.jobportal.repository.JobinvitationsRepo;
 import com.jobportal.repository.UserRepo;
+import com.jobportal.repository.ResumeRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -12,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.jobportal.model.Users;
 
 @Controller
@@ -23,6 +29,9 @@ public class JobinvitationsController {
 
     @Autowired
     private JobinvitationsRepo repository;
+
+    @Autowired
+    private ResumeRepo resumeRepo;
 
     @PostMapping("/add")
     @ResponseBody
@@ -43,6 +52,53 @@ public class JobinvitationsController {
         repository.save(invitation);
 
         return ResponseEntity.ok("Invitation sent");
+    }
+
+    @GetMapping("/my")
+    @ResponseBody
+    public ResponseEntity<?> getMyInvitation(Authentication authentication) {
+        try {
+            String username = authentication.getName();
+
+            Users user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            java.util.List<Jobinvitations> invitations = repository.findByEmployerId(user.getUserId().intValue());
+
+            return ResponseEntity.ok(invitations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Қате: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/me")
+    @ResponseBody
+    public ResponseEntity<?> getInvitationsForMyResumes(Authentication authentication) {
+        try {
+            // Берём email текущего пользователя
+            String username = authentication.getName();
+
+            // Находим пользователя (работодателя) по email
+            Users applicant = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Получаем все вакансии этого работодателя
+            List<Resumes> myResumes = resumeRepo.findByUser(applicant);
+
+            // Собираем ID вакансий
+            List<Integer> resumeIds = myResumes.stream()
+                    .map(v -> v.getResumeId().intValue()) // преобразуем Long в Integer
+                    .collect(Collectors.toList());
+
+            // Получаем все заявки на эти вакансии
+            List<Jobinvitations> invitations = repository.findByResumeIdIn(resumeIds);
+
+            return ResponseEntity.ok(invitations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Қате: " + e.getMessage());
+        }
     }
 
 

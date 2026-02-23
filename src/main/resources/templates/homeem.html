@@ -17,6 +17,58 @@
     </div>
 </header>
 
+<div id="vacancySelectModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeVacancyModal">&times;</span>
+        <h3>Сіздің вакансияңызды таңдаңыз</h3>
+        <div id="vacancyOptions"></div>
+        <button id="submitVacancyChoice">Жіберу</button>
+    </div>
+</div>
+
+<div id="resumeViewModal" class="modal">
+    <div class="resume-modal-content">
+        <div class="resume-modal-header">
+            <h2 id="modalResumeTitle"></h2>
+            <span class="close" id="closeResumeViewModal">&times;</span>
+        </div>
+
+        <div class="resume-modal-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Локация</label>
+                    <p id="modalResumeLocation"></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Тәжірибе</label>
+                    <p id="modalResumeExperience"></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Білім</label>
+                    <p id="modalResumeEducation"></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Жұмыс кестесі</label>
+                    <p id="modalResumeSchedule"></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Жалақы</label>
+                    <p id="modalResumeSalary" class="salary"></p>
+                </div>
+            </div>
+
+            <div class="description-block">
+                <label>Дағдылар / Сипаттама</label>
+                <p id="modalResumeDescription"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <main class="vacancies-container"></main>
 
 <div th:replace="navigation :: footer"></div>
@@ -32,19 +84,32 @@
         }
 
         let resumes = [];
+        let currentUser = null;
         const container = document.querySelector(".vacancies-container");
 
+        // Получаем данные текущего пользователя
         try {
-        console.log("TOKEN:", token);
+            const userRes = await fetch("/api/user", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (!userRes.ok) {
+                throw new Error("Не удалось получить данные пользователя");
+            }
+
+            currentUser = await userRes.json();
+        } catch (error) {
+            console.error("Ошибка при загрузке пользователя:", error);
+        }
+
+        // Загрузка резюме
+        try {
             const response = await fetch("/api/homeem", {
-                headers: {
-                    "Authorization": "Bearer " + token
-                }
+                headers: { "Authorization": "Bearer " + token }
             });
 
             if (!response.ok) {
-                console.error("Ошибка при загрузке резюме:", response.status);
-                if (response.status === 403 || response.status === 401) {
+                if (response.status === 401 || response.status === 403) {
                     alert("Сессия аяқталды. Қайта кіріңіз.");
                     localStorage.removeItem("token");
                     window.location.href = "/login";
@@ -56,125 +121,221 @@
             resumes = data.resumes || [];
             renderResumes(resumes);
 
-        } catch (error) {
-            console.error("Қате:", error);
+        } catch (err) {
+            console.error("Қате:", err);
             alert("Сервермен байланыс үзілді. Кейінірек қайталаңыз.");
         }
 
+        // Поиск по резюме
         const searchInput = document.querySelector(".search-bar input");
         const searchBtn = document.querySelector(".search-btn");
 
         searchBtn.addEventListener("click", () => {
             const query = searchInput.value.trim().toLowerCase();
-            const filtered = resumes.filter(res => res.name.toLowerCase().includes(query));
+            const filtered = resumes.filter(res =>
+                (res.title || res.user?.fullName || "").toLowerCase().includes(query)
+            );
             renderResumes(filtered);
         });
-        searchInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                searchBtn.click();
+
+        searchInput.addEventListener("keypress", e => {
+            if (e.key === "Enter") searchBtn.click();
+        });
+
+        // Функция открытия модального окна просмотра резюме
+        window.openResumeViewModal = function(resume) {
+            document.getElementById("modalResumeTitle").textContent = resume.title || "-";
+            document.getElementById("modalResumeLocation").textContent = resume.location || "-";
+            document.getElementById("modalResumeExperience").textContent =
+                resume.experience ? resume.experience + " жыл" : "-";
+            document.getElementById("modalResumeEducation").textContent = resume.education || "-";
+            document.getElementById("modalResumeSchedule").textContent = resume.schedule || "-";
+            document.getElementById("modalResumeSalary").textContent =
+                resume.salaryExpectation ? resume.salaryExpectation + " ₸" : "-";
+            document.getElementById("modalResumeDescription").textContent =
+                resume.skills || "Сипаттама жоқ";
+
+            document.getElementById("resumeViewModal").style.display = "flex";
+        };
+
+        // Закрытие модальных окон
+        document.getElementById("closeResumeViewModal").onclick = () => {
+            document.getElementById("resumeViewModal").style.display = "none";
+        };
+
+        document.getElementById("closeVacancyModal").onclick = () => {
+            document.getElementById("vacancySelectModal").style.display = "none";
+        };
+
+        // Закрытие по клику вне модального окна
+        window.addEventListener("click", (e) => {
+            const resumeModal = document.getElementById("resumeViewModal");
+            const vacancyModal = document.getElementById("vacancySelectModal");
+
+            if (e.target === resumeModal) {
+                resumeModal.style.display = "none";
+            }
+            if (e.target === vacancyModal) {
+                vacancyModal.style.display = "none";
             }
         });
-function openPublicResumeModal(resume) {
-    document.getElementById("publicModalTitle").textContent = resume.title || "-";
-    document.getElementById("publicModalLocation").textContent = resume.location || "-";
-    document.getElementById("publicModalExperience").textContent =
-        resume.experience ? resume.experience + " жыл" : "-";
-    document.getElementById("publicModalEducation").textContent = resume.education || "-";
-    document.getElementById("publicModalSchedule").textContent = resume.schedule || "-";
-    document.getElementById("publicModalSalary").textContent =
-        resume.salaryExpectation ? resume.salaryExpectation + " ₸" : "-";
-    document.getElementById("publicModalDescription").textContent =
-        resume.skills || "Сипаттама жоқ";
 
-    document.getElementById("publicResumeModal").style.display = "flex";
-}
+        // Функция отображения резюме
+        function renderResumes(list) {
+            container.innerHTML = "";
+            if (list.length === 0) {
+                container.innerHTML = "<p style='text-align:center;color:#333;'>Резюме табылмады.</p>";
+                return;
+            }
 
-function closePublicResumeModal() {
-    document.getElementById("publicResumeModal").style.display = "none";
-}
+            list.forEach(res => {
+                const resumeId = res.resumeId || res.id;
 
-window.addEventListener("click", function(e) {
-    const modal = document.getElementById("publicResumeModal");
-    if (e.target === modal) {
-        modal.style.display = "none";
-    }
-});
-    function renderResumes(list) {
-    container.innerHTML = "";
-    if (list.length === 0) {
-        container.innerHTML = "<p style='text-align:center;color:#333;'>Резюме табылмады.</p>";
-        return;
-    }
+                const card = document.createElement("div");
+                card.className = "vacancy-card";
 
-    list.forEach(res => {
-        const card = document.createElement("div");
-        card.className = "vacancy-card";
-        card.innerHTML = `
-            <div class="vacancy-header">
-                <span class="icon"><img src="/images/user.png" alt="Резюме" class="icon"></span>
-                <h3>${res.title || res.user?.fullName || "-"}</h3>
-                <span class="like"><button class="like-btn"><img src="/images/thumbUp.png" alt="Лайк" class="icon"></button></span>
-            </div>
-            <p class="date">Соңғы өзгеріс: ${res.createdAt ? res.createdAt.substring(0, 10) : "-"}</p>
-            <p class="company"><img src="/images/address.png" alt="Қала" class="icon"> ${res.location || "-"}</p>
-            <div class="tags">
-                ${res.experience ? `<span>${res.experience} жылдық тәжірибе</span>` : ""}
-                ${res.education ? `<span>${res.education} білім</span>` : ""}
-                ${res.schedule ? `<span>${res.schedule} жұмыс кестесі</span>` : ""}
-            </div>
-            <div class="salary">
-              ${res.salaryExpectation ? res.salaryExpectation + " ₸" : ""}
-            </div>
-            <p class="responses"><span>0</span> компания қызықтырады</p>
-            <button class="apply-btn">Байланысу ➤</button>
-        `;
-        card.addEventListener("click", () => openPublicResumeModal(res));
-        container.appendChild(card);
-    });
-}
+                // Клик по карточке для просмотра резюме
+                card.addEventListener("click", (e) => {
+                    // Не открываем модалку если клик по кнопке "Байланысу"
+                    if (!e.target.closest(".apply-btn") && !e.target.closest(".like-btn")) {
+                        openResumeViewModal(res);
+                    }
+                });
+
+                card.innerHTML = `
+                    <div class="vacancy-header">
+                        <span class="icon"><img src="/images/user.png" alt="Резюме" class="icon"></span>
+                        <h3>${res.title || res.user?.fullName || "-"}</h3>
+                        <span class="like"><button class="like-btn"><img src="/images/thumbUp.png" alt="Лайк" class="icon"></button></span>
+                    </div>
+                    <p class="date">Соңғы өзгеріс: ${res.createdAt ? res.createdAt.substring(0,10) : "-"}</p>
+                    <p class="company"><img src="/images/address.png" alt="Қала" class="icon"> ${res.location || "-"}</p>
+                    <div class="tags">
+                        ${res.education?.toLowerCase().includes("студент") ? "<span>Студент</span>" : ""}
+                        ${res.schedule?.toLowerCase().includes("қашықтан") ? "<span>Қашықтан</span>" : ""}
+                    </div>
+                    <div class="salary">
+                        ${res.salaryExpectation ? res.salaryExpectation + " ₸" : ""}
+                    </div>
+                    <p class="responses"><span>0</span> компания қызықтырады</p>
+                    <button class="apply-btn" data-resume-id="${resumeId}">Байланысу ➤</button>
+                `;
+
+                container.appendChild(card);
+            });
+
+            // Добавляем обработчики для кнопок "Байланысу"
+            attachApplyHandlers();
+        }
+
+        // Обработка кнопок "Байланысу"
+        async function attachApplyHandlers() {
+            const applyButtons = document.querySelectorAll(".apply-btn");
+
+            applyButtons.forEach(btn => {
+                btn.addEventListener("click", async (e) => {
+                    e.stopPropagation(); // Предотвращаем открытие модалки просмотра
+
+                    const currentResumeId = btn.getAttribute("data-resume-id");
+
+                    if (!currentUser) {
+                        alert("Қолданушы деректері жүктелмеді");
+                        return;
+                    }
+
+                    try {
+                        // Получаем вакансии текущего пользователя
+                        const vacRes = await fetch(`/vacancies/user/${currentUser.userId}`, {
+                            headers: { "Authorization": "Bearer " + token }
+                        });
+
+                        if (!vacRes.ok) {
+                            alert("Жүктеу кезінде қате.");
+                            return;
+                        }
+
+                        const vacancies = await vacRes.json();
+
+                        if (vacancies.length === 0) {
+                            alert("Сізде вакансия жоқ. Алдымен вакансия қосыңыз.");
+                            return;
+                        }
+
+                        // Показываем модалку с вакансиями
+                        const modal = document.getElementById("vacancySelectModal");
+                        const optionsContainer = document.getElementById("vacancyOptions");
+                        modal.style.display = "flex";
+
+                        optionsContainer.innerHTML = "";
+                        vacancies.forEach((v, i) => {
+                            const title = v.title || `Вакансия ${i+1}`;
+                            const div = document.createElement("div");
+                            div.textContent = title;
+                            div.className = "resume-option";
+                            div.dataset.index = i;
+                            div.dataset.vacancyId = v.vacancyId || v.id;
+
+                            div.addEventListener("click", () => {
+                                document.querySelectorAll(".resume-option").forEach(el => el.classList.remove("selected"));
+                                div.classList.add("selected");
+                            });
+
+                            optionsContainer.appendChild(div);
+                        });
+
+                        // Обработка отправки выбора
+                        document.getElementById("submitVacancyChoice").onclick = async () => {
+                            const selected = document.querySelector(".resume-option.selected");
+                            if (!selected) {
+                                alert("Вакансия таңдаңыз!");
+                                return;
+                            }
+
+                            const vacancyId = selected.dataset.vacancyId;
+
+                            if (!vacancyId || !currentResumeId) {
+                                alert("Ошибка: ID вакансии или резюме не найден");
+                                return;
+                            }
+
+                            try {
+                                const response = await fetch("/invitations/add", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "Authorization": "Bearer " + token
+                                    },
+                                    body: JSON.stringify({
+                                        resumeId: Number(currentResumeId),
+                                        vacancyId: Number(vacancyId)
+                                    })
+                                });
+
+                                const responseText = await response.text();
+
+                                if (!response.ok) {
+                                    alert("Қате: " + responseText);
+                                    return;
+                                }
+
+                                alert("Сәтті өтініш жіберілді!");
+                                modal.style.display = "none";
+
+                            } catch (fetchError) {
+                                console.error("Ошибка при отправке запроса:", fetchError);
+                                alert("Сервер қатесі: " + fetchError.message);
+                            }
+                        };
+
+                    } catch (err) {
+                        console.error("Ошибка в обработчике:", err);
+                        alert("Сервер қатесі.");
+                    }
+                });
+            });
+        }
     });
 </script>
-<div id="publicResumeModal" class="modal" style="display:none;">
-    <div class="resume-modal-content">
-        <div class="resume-modal-header">
-            <h2 id="publicModalTitle"></h2>
-            <span class="close" onclick="closePublicResumeModal()">&times;</span>
-        </div>
 
-        <div class="resume-modal-body">
-            <div class="info-grid">
-                <div class="info-item">
-                    <label>Локация</label>
-                    <p id="publicModalLocation"></p>
-                </div>
-
-                <div class="info-item">
-                    <label>Тәжірибе</label>
-                    <p id="publicModalExperience"></p>
-                </div>
-
-                <div class="info-item">
-                    <label>Білім</label>
-                    <p id="publicModalEducation"></p>
-                </div>
-
-                <div class="info-item">
-                    <label>Жұмыс кестесі</label>
-                    <p id="publicModalSchedule"></p>
-                </div>
-
-                <div class="info-item">
-                    <label>Жалақы</label>
-                    <p id="publicModalSalary" class="salary"></p>
-                </div>
-            </div>
-
-            <div class="description-block">
-                <label>Дағдылар / Сипаттама</label>
-                <p id="publicModalDescription"></p>
-            </div>
-        </div>
-    </div>
-</div>
 </body>
 </html>

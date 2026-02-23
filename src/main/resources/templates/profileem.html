@@ -116,13 +116,13 @@ function openVacancyModal(vacancy) {
     document.getElementById("modalVacancyLocation").textContent = vacancy.location || "-";
     document.getElementById("modalVacancyExperience").textContent = vacancy.experience || "-";
     document.getElementById("modalVacancySchedule").textContent = vacancy.schedule || "-";
-    document.getElementById("modalVacancySalary").textContent = vacancy.salary_from && vacancy.salary_to
-        ? vacancy.salary_from + " - " + vacancy.salary_to
+    document.getElementById("modalVacancySalary").textContent = vacancy.salaryFrom && vacancy.salaryTo
+        ? vacancy.salaryFrom + " - " + vacancy.salaryTo
         : "Көрсетілмеген";
     document.getElementById("modalVacancyAddress").textContent = vacancy.adres || "-";
-    document.getElementById("modalVacancyPayment").textContent = vacancy.payment_time || "-";
+    document.getElementById("modalVacancyPayment").textContent = vacancy.paymentTime || "-";
     document.getElementById("modalVacancyRemote").textContent = vacancy.remote ? "Иә" : "Жоқ";
-    document.getElementById("modalVacancyForStudents").textContent = vacancy.for_students ? "Иә" : "Жоқ";
+    document.getElementById("modalVacancyForStudents").textContent = vacancy.forStudents ? "Иә" : "Жоқ";
     document.getElementById("modalVacancyRequirements").textContent = vacancy.requirements || "-";
 window.onclick = function(event) {
     const modal = document.getElementById("vacancyModal");
