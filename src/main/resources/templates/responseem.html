@@ -128,19 +128,6 @@
         }
     }
 
-    // Функция для получения имени из резюме
-    function getUserNameFromResume(resumeData) {
-        if (!resumeData) return null;
-
-        // Пробуем получить имя из user объекта в резюме
-        if (resumeData.user) {
-            const user = resumeData.user;
-            return user.name || user.fullName || user.username || user.email || null;
-        }
-
-        return null;
-    }
-
     // Функция для открытия модального окна с резюме
     function openResumeModal(resume) {
 
@@ -213,6 +200,7 @@
                 throw new Error("Ошибка обновления: " + res.status);
             }
 
+            // После успешного обновления перезагружаем данные
             await loadEmployerApplications();
 
         } catch (error) {
@@ -311,7 +299,9 @@
             ` : ""}
         `;
 
+        // Добавляем обработчик клика на карточку
         card.addEventListener('click', async function(event) {
+            // Если клик был по кнопке, не открываем модальное окно
             if (event.target.tagName === 'BUTTON') {
                 return;
             }
@@ -341,20 +331,23 @@
             }
         });
 
+        // Добавляем обработчики для кнопок
         if (app.status === "pending") {
             const acceptBtn = card.querySelector(".accept-btn");
             const rejectBtn = card.querySelector(".reject-btn");
 
             if (acceptBtn) {
                 acceptBtn.addEventListener("click", async (e) => {
-                    e.stopPropagation();
+                    e.stopPropagation(); // Предотвращаем всплытие события
+                    e.preventDefault(); // Предотвращаем стандартное поведение
                     await updateStatus(app.applicationId, "interview");
                 });
             }
 
             if (rejectBtn) {
                 rejectBtn.addEventListener("click", async (e) => {
-                    e.stopPropagation();
+                    e.stopPropagation(); // Предотвращаем всплытие события
+                    e.preventDefault(); // Предотвращаем стандартное поведение
                     await updateStatus(app.applicationId, "rejected");
                 });
             }
@@ -433,7 +426,6 @@
     }
 
     async function loadEmployerApplications() {
-
         try {
             const appRes = await fetch("/vacancies/applications/my", {
                 headers: {
@@ -477,6 +469,7 @@
 
             const allItems = [];
 
+            // Создаем карточки для заявок
             if (applications && applications.length > 0) {
                 for (const app of applications) {
                     let resumeData = null;
@@ -491,6 +484,7 @@
                 console.log("No applications found");
             }
 
+            // Создаем карточки для приглашений
             if (invitations && invitations.length > 0) {
                 for (const inv of invitations) {
                     let resumeData = null;
@@ -505,12 +499,39 @@
                 console.log("No invitations found");
             }
 
+            // Заполняем контейнеры
             if (allItems.length === 0) {
                 containers.all.innerHTML = `<h2>Қазіргі уақытта өтініштер жоқ</h2>`;
             } else {
                 allItems.forEach(item => {
+                    // Клонируем карточку для вкладки "Все"
                     const cloneForAll = item.card.cloneNode(true);
 
+                    // Добавляем обработчики для клонированной карточки
+                    if (item.status === "pending") {
+                        const acceptBtn = cloneForAll.querySelector(".accept-btn");
+                        const rejectBtn = cloneForAll.querySelector(".reject-btn");
+
+                        if (acceptBtn) {
+                            acceptBtn.addEventListener("click", async (e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                const appId = acceptBtn.getAttribute('data-app-id');
+                                await updateStatus(appId, "interview");
+                            });
+                        }
+
+                        if (rejectBtn) {
+                            rejectBtn.addEventListener("click", async (e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                const appId = rejectBtn.getAttribute('data-app-id');
+                                await updateStatus(appId, "rejected");
+                            });
+                        }
+                    }
+
+                    // Добавляем обработчик клика для клонированной карточки
                     cloneForAll.addEventListener('click', async function(event) {
                         if (event.target.tagName === 'BUTTON') return;
 
@@ -541,6 +562,7 @@
 
                     containers.all.appendChild(cloneForAll);
 
+                    // Добавляем оригинальную карточку в соответствующую вкладку
                     if (item.status && containers[item.status]) {
                         containers[item.status].appendChild(item.card);
                     }
