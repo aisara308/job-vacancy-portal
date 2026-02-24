@@ -33,8 +33,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
-                                "/register",
-                                "/login",
+                                "/register","/login",
+                                "/send-reset-code","/verify-reset-code","/reset-password-final","/enter-code",
                                 "/response", "/responseem", "/home", "/homeem",
                                 "/information", "/chat", "/chatem", "/profile",
                                 "/profileem", "/resume", "/vacancy", "/resume/**",

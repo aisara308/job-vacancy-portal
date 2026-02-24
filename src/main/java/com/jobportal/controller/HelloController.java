@@ -75,5 +75,9 @@ public class HelloController {
     public String informationPage() {
         return "information";
     }
+    @GetMapping("/enter-code")
+    public String enterCodePage() {
+        return "enter-code";
+    }
 
 }

@@ -25,6 +25,12 @@ public class Users {
     @Column(length = 20)
     private String phone;
 
+    @Column(length = 6)
+    private String resetCode;
+
+    @Column(nullable = true)
+    private LocalDateTime resetCodeExpiry;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -40,6 +46,8 @@ public class Users {
         this.passwordHash = passwordHash;
         this.userType = userType;
         this.phone = phone;
+        this.createdAt = LocalDateTime.now();
+        this.status = "active";
     }
 
     // Геттеры и сеттеры
@@ -91,6 +99,18 @@ public class Users {
         this.phone = phone;
     }
 
+    public String getResetCode() {
+        return resetCode;
+    }
+    public void setResetCode(String resetCode) {
+        this.resetCode = resetCode;
+    }
+    public LocalDateTime getResetCodeExpiry() {
+        return resetCodeExpiry;
+    }
+    public void setResetCodeExpiry(LocalDateTime resetCodeExpiry) {
+        this.resetCodeExpiry = resetCodeExpiry;
+    }
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -105,5 +125,16 @@ public class Users {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+    public boolean isResetCodeValid(String code) {
+        if (this.resetCode == null || this.resetCodeExpiry == null) {
+            return false;
+        }
+
+        if (!this.resetCode.equals(code)) {
+            return false;
+        }
+
+        return this.resetCodeExpiry.isAfter(LocalDateTime.now());
     }
 }

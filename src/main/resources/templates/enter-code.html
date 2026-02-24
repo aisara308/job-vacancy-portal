@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <title>Құпиясөзді қалпына келтіру</title>
+</head>
+<body>
+
+<div class="container">
+
+    <h2>Құпиясөзді қалпына келтіру</h2>
+
+    <!-- ===== Блок ввода кода ===== -->
+    <div id="codeSection">
+        <input type="text" id="codeInput" placeholder="6 таңбалы код">
+        <button onclick="verifyCode()">Тексеру</button>
+    </div>
+
+    <!-- ===== Блок нового пароля ===== -->
+    <div id="passwordSection" style="display:none;">
+        <input type="password" id="newPassword" placeholder="Жаңа құпиясөз">
+        <input type="password" id="confirmPassword" placeholder="Құпиясөзді қайталаңыз">
+        <button onclick="updatePassword()">Сақтау</button>
+    </div>
+
+</div>
+
+<script>
+
+    async function verifyCode() {
+        const code = document.getElementById("codeInput").value.trim();
+        const email = localStorage.getItem("resetEmail");
+
+        if (!code) return alert("Код енгізіңіз");
+
+        const response = await fetch("/verify-reset-code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, code })
+        });
+
+        if (response.ok) {
+            // Скрываем ввод кода
+            document.getElementById("codeSection").style.display = "none";
+            // Показываем форму пароля
+            document.getElementById("passwordSection").style.display = "block";
+        } else {
+            alert("Код қате немесе мерзімі өтті");
+        }
+    }
+
+    async function updatePassword() {
+        const email = localStorage.getItem("resetEmail");
+        const newPassword = document.getElementById("newPassword").value.trim();
+        const confirmPassword = document.getElementById("confirmPassword").value.trim();
+
+        if (!newPassword || !confirmPassword)
+            return alert("Барлық өрістерді толтырыңыз");
+
+        if (newPassword !== confirmPassword)
+            return alert("Құпиясөздер сәйкес келмейді");
+
+        const response = await fetch("/reset-password-final", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, newPassword })
+        });
+
+        if (response.ok) {
+            alert("Құпиясөз сәтті жаңартылды");
+            localStorage.removeItem("resetEmail");
+            window.location.href = "/login";
+        } else {
+            alert("Қате орын алды");
+        }
+    }
+
+</script>
+
+</body>
+</html>

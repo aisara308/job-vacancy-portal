@@ -15,6 +15,37 @@ public class UserController {
 
     @Autowired
     private UserService service;
+    @PostMapping("/send-reset-code")
+    public ResponseEntity<?> sendResetCode(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        boolean sent = service.generateAndSendResetCode(email);
+
+        if (!sent) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok().build();
+    }
+    @PostMapping("/verify-reset-code")
+    public ResponseEntity<?> verifyCode(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String code = request.get("code");
+
+        boolean valid = service.verifyResetCode(email, code);
+
+        if (!valid) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password-final")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String newPassword = request.get("newPassword");
+
+        service.updatePassword(email, newPassword);
+        return ResponseEntity.ok().build();
+    }
 
     @PostMapping("/register")
     public Map<String, String> register(@RequestBody Users user) {
