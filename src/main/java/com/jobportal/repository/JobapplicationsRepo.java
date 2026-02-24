@@ -9,4 +9,5 @@ import java.util.List;
 public interface JobapplicationsRepo extends JpaRepository<Jobapplications, Integer> {
     List<Jobapplications> findByApplicantId(Integer applicantId);
     List<Jobapplications> findByVacancyIdIn(List<Integer> vacancyIds);
+    boolean existsByResumeIdAndVacancyId(Integer resumeId, Integer vacancyId);
 }

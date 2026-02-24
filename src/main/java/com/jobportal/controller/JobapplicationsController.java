@@ -36,6 +36,17 @@ public class JobapplicationsController {
 
         application.setApplicantId(user.getUserId().intValue());
 
+        boolean alreadyExists = repository.existsByResumeIdAndVacancyId(
+                application.getResumeId(),
+                application.getVacancyId()
+        );
+
+        if (alreadyExists) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Сіз осы түйіндемемен осы вакансияға өтініш бергенсіз.");
+        }
+
         application.setStatus("pending");
         application.setAppliedAt(LocalDateTime.now());
 

@@ -46,6 +46,18 @@ public class JobinvitationsController {
         invitation.setResumeId(request.getResumeId());
         invitation.setVacancyId(request.getVacancyId());
         invitation.setEmployerId(user.getUserId().intValue());
+
+        boolean alreadyExists = repository.existsByResumeIdAndVacancyId(
+                invitation.getResumeId(),
+                invitation.getVacancyId()
+        );
+
+        if (alreadyExists) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Сіз осы вакансиямен осы түйіндемеге шақыру жібергенсіз.");
+        }
+
         invitation.setStatus("sent");
         invitation.setSentAt(LocalDateTime.now());
 

@@ -11,4 +11,5 @@ import java.util.List;
 public interface JobinvitationsRepo extends JpaRepository<Jobinvitations, Integer> {
     List<Jobinvitations> findByEmployerId(Integer employerId);
     List<Jobinvitations> findByResumeIdIn(List<Integer> resumeIds);
+    boolean existsByResumeIdAndVacancyId(Integer resumeId, Integer vacancyId);
 }
