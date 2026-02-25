@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="kk">
+<html lang="kk" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <title>Құпиясөзді қалпына келтіру</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}" />
 </head>
 <body>
 
@@ -13,67 +14,103 @@
     <!-- ===== Блок ввода кода ===== -->
     <div id="codeSection">
         <input type="text" id="codeInput" placeholder="6 таңбалы код">
-        <button onclick="verifyCode()">Тексеру</button>
+        <button onclick="verifyCode()" class="login-btn">Тексеру</button>
     </div>
 
     <!-- ===== Блок нового пароля ===== -->
     <div id="passwordSection" style="display:none;">
         <input type="password" id="newPassword" placeholder="Жаңа құпиясөз">
-        <input type="password" id="confirmPassword" placeholder="Құпиясөзді қайталаңыз">
-        <button onclick="updatePassword()">Сақтау</button>
+        <div style="height:20px"></div>
+        <div class="password-field">
+            <input type="password" id="confirmPassword" placeholder="Құпиясөзді қайталаңыз">
+            <button type="button" class="eye-btn" id="toggleLoginPassword" tabindex="-1">👁️</button>
+        </div>
+        <div style="height:20px"></div>
+        <button onclick="updatePassword()" class="login-btn">Сақтау</button>
     </div>
 
 </div>
 
 <script>
+    const togglePwdLogin = document.getElementById("toggleLoginPassword");
+    const pwdInputLogin = document.getElementById("confirmPassword");
 
-    async function verifyCode() {
-        const code = document.getElementById("codeInput").value.trim();
-        const email = localStorage.getItem("resetEmail");
+    togglePwdLogin.addEventListener("click", () => {
+        if (pwdInputLogin.type === "password") {
+            pwdInputLogin.type = "text";
+        } else {
+            pwdInputLogin.type = "password";
+        }
+    });
+        async function verifyCode() {
+            const code = document.getElementById("codeInput").value.trim();
+            const email = localStorage.getItem("resetEmail");
 
-        if (!code) return alert("Код енгізіңіз");
+            if (!code) return alert("Код енгізіңіз");
 
-        const response = await fetch("/verify-reset-code", {
+            const response = await fetch("/verify-reset-code", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, code })
+            });
+
+            if (response.ok) {
+                // Скрываем ввод кода
+                document.getElementById("codeSection").style.display = "none";
+                // Показываем форму пароля
+                document.getElementById("passwordSection").style.display = "block";
+            } else {
+                alert("Код қате немесе мерзімі өтті");
+            }
+        }
+
+        async function updatePassword() {
+            const email = localStorage.getItem("resetEmail");
+            const newPassword = document.getElementById("newPassword").value.trim();
+            const confirmPassword = document.getElementById("confirmPassword").value.trim();
+
+            if (!newPassword || !confirmPassword)
+                return alert("Барлық өрістерді толтырыңыз");
+
+            if (newPassword !== confirmPassword)
+                return alert("Құпиясөздер сәйкес келмейді");
+
+            const response = await fetch("/reset-password-final", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, newPassword })
+            });
+
+            if (response.ok) {
+
+        // автоматически логинимся
+        const loginResponse = await fetch("/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, code })
+            body: JSON.stringify({
+                email: email,
+                passwordHash: newPassword
+            })
         });
 
-        if (response.ok) {
-            // Скрываем ввод кода
-            document.getElementById("codeSection").style.display = "none";
-            // Показываем форму пароля
-            document.getElementById("passwordSection").style.display = "block";
-        } else {
-            alert("Код қате немесе мерзімі өтті");
+        const loginData = await loginResponse.json();
+
+        if (loginResponse.ok && loginData.token) {
+            localStorage.setItem("token", loginData.token);
+            localStorage.setItem("userType", loginData.userType);
+
+            if (loginData.userType === "employer") {
+                window.location.href = "/homeem";
+            } else {
+                window.location.href = "/home";
+            }
         }
-    }
 
-    async function updatePassword() {
-        const email = localStorage.getItem("resetEmail");
-        const newPassword = document.getElementById("newPassword").value.trim();
-        const confirmPassword = document.getElementById("confirmPassword").value.trim();
-
-        if (!newPassword || !confirmPassword)
-            return alert("Барлық өрістерді толтырыңыз");
-
-        if (newPassword !== confirmPassword)
-            return alert("Құпиясөздер сәйкес келмейді");
-
-        const response = await fetch("/reset-password-final", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, newPassword })
-        });
-
-        if (response.ok) {
-            alert("Құпиясөз сәтті жаңартылды");
-            localStorage.removeItem("resetEmail");
-            window.location.href = "/login";
-        } else {
-            alert("Қате орын алды");
+        localStorage.removeItem("resetEmail");
+    } else {
+                alert("Қате орын алды");
+            }
         }
-    }
 
 </script>
 

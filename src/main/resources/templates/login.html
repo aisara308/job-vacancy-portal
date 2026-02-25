@@ -19,10 +19,6 @@
 
         <a href="#" class="forgot-link" onclick="openResetModal()">Құпиясөзді ұмыттыңыз ба?</a>
 
-        <div id="resetPasswordDiv" style="display:none;">
-            <input type="email" id="resetEmail" placeholder="Поштаны енгізіңіз">
-            <button id="sendReset">Сбросить пароль</button>
-        </div>
         <button type="submit" class="login-btn">Кіру</button>
     </form>
 
@@ -151,8 +147,8 @@ document.getElementById("sendReset").addEventListener("click", async () => {
     <div class="modal-content">
         <h3>Құпиясөзді қалпына келтіру</h3>
         <input type="email" id="resetEmailModal" placeholder="Поштаны енгізіңіз">
-        <button onclick="sendResetCodeModal()">Код жіберу</button>
-        <button onclick="closeResetModal()" class="cancel-btn">Жабу</button>
+        <button onclick="closeResetModal()" class="modal-btn">Жабу</button>
+        <button onclick="sendResetCodeModal()" class="modal-btn">Код жіберу</button>
     </div>
 </div>
 </body>

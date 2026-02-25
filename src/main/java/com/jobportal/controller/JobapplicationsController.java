@@ -9,13 +9,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import com.jobportal.repository.JobapplicationsRepo;
 import com.jobportal.model.Jobapplications;
 import com.jobportal.model.Users;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping("/applications")
 public class JobapplicationsController {
+
+    private static final Logger logger = LoggerFactory.getLogger(JobapplicationsController.class);
 
     @Autowired
     private JobapplicationsRepo repository;
@@ -28,31 +34,45 @@ public class JobapplicationsController {
     public ResponseEntity<?> apply(@RequestBody Jobapplications application,
                                    Authentication authentication) {
 
-        String username = authentication.getName(); // email или логин
+        String username = authentication.getName();
+        logger.info("Өтініш беру әрекеті басталды: applicantEmail={}, resumeId={}, vacancyId={}",
+                username, application.getResumeId(), application.getVacancyId());
 
-        // Находим пользователя
-        Users user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        try{// Находим пользователя
+            Users user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> {
+                        logger.warn("Пайдаланушы табылмады: email={}", username);
+                        return new RuntimeException("User not found");
+                    });
 
-        application.setApplicantId(user.getUserId().intValue());
+            application.setApplicantId(user.getUserId().intValue());
 
-        boolean alreadyExists = repository.existsByResumeIdAndVacancyId(
-                application.getResumeId(),
-                application.getVacancyId()
-        );
+            boolean alreadyExists = repository.existsByResumeIdAndVacancyId(
+                    application.getResumeId(),
+                    application.getVacancyId()
+            );
 
-        if (alreadyExists) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("Сіз осы түйіндемемен осы вакансияға өтініш бергенсіз.");
+            if (alreadyExists) {
+                logger.warn("Қайталап өтініш берілді: applicantEmail={}, resumeId={}, vacancyId={}",
+                        username, application.getResumeId(), application.getVacancyId());
+                return ResponseEntity
+                        .badRequest()
+                        .body("Сіз осы түйіндемемен осы вакансияға өтініш бергенсіз.");
+            }
+
+            application.setStatus("pending");
+            application.setAppliedAt(LocalDateTime.now());
+
+            repository.save(application);
+            logger.info("Өтініш сәтті жасалды: applicantEmail={}, resumeId={}, vacancyId={}",
+                    username, application.getResumeId(), application.getVacancyId());
+
+            return ResponseEntity.ok("Application created");
+        }catch (Exception e) {
+            logger.error("Өтініш беру кезінде қате шықты: applicantEmail={}, resumeId={}, vacancyId={}",
+                    username, application.getResumeId(), application.getVacancyId(), e);
+            return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
-
-        application.setStatus("pending");
-        application.setAppliedAt(LocalDateTime.now());
-
-        repository.save(application);
-
-        return ResponseEntity.ok("Application created");
     }
 
     @PutMapping("/{applicationId}/status")
@@ -62,28 +82,40 @@ public class JobapplicationsController {
             @RequestBody StatusUpdateRequest request,
             Authentication authentication
     ) {
+        String username = authentication.getName();
+        logger.info("Өтініш статусы жаңарту әрекеті басталды: employerEmail={}, applicationId={}, status={}",
+                username, applicationId, request.getStatus());
         try {
 
-            String username = authentication.getName();
-
             Users employer = userRepository.findByEmail(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> {
+                        logger.warn("Пайдаланушы табылмады: email={}", username);
+                        return new RuntimeException("User not found");
+                    });
 
             Jobapplications jobapplication = repository.findById(applicationId)
-                    .orElseThrow(() -> new RuntimeException("Application not found"));
+                    .orElseThrow(() -> {
+                        logger.warn("Өтініш табылмады: applicationId={}", applicationId);
+                        return new RuntimeException("Application not found");
+                    });
 
             if (!java.util.List.of("pending", "interview", "invited", "rejected")
                     .contains(request.getStatus())) {
+                logger.warn("Жарамсыз статус берілді: status={}", request.getStatus());
                 return ResponseEntity.badRequest().body("Invalid status");
             }
 
             jobapplication.setStatus(request.getStatus());
             repository.save(jobapplication);
 
+            logger.info("Өтініш статусы сәтті жаңартылды: applicationId={}, status={}",
+                    applicationId, request.getStatus());
+
             return ResponseEntity.ok("Status updated");
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Өтініш статусы жаңарту кезінде қате шықты: applicationId={}, status={}",
+                    applicationId, request.getStatus(), e);
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }
@@ -91,17 +123,22 @@ public class JobapplicationsController {
     @GetMapping("/my")
     @ResponseBody
     public ResponseEntity<?> getMyApplications(Authentication authentication) {
+        String username = authentication.getName();
+        logger.info("Менің өтініштерім сұралды: applicantEmail={}", username);
+
         try {
-            String username = authentication.getName();
-
             Users user = userRepository.findByEmail(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> {
+                        logger.warn("Пайдаланушы табылмады: email={}", username);
+                        return new RuntimeException("User not found");
+                    });
 
-            java.util.List<Jobapplications> applications = repository.findByApplicantId(user.getUserId().intValue());
+            List<Jobapplications> applications = repository.findByApplicantId(user.getUserId().intValue());
+            logger.debug("Табылған өтініштер саны: {}", applications.size());
 
             return ResponseEntity.ok(applications);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Өтініштерді алу кезінде қате шықты: applicantEmail={}", username, e);
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }

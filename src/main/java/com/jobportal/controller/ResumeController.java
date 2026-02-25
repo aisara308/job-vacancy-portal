@@ -6,6 +6,8 @@ import com.jobportal.repository.UserRepo;
 import com.jobportal.repository.JobinvitationsRepo;
 import com.jobportal.service.ResumeService;
 import com.jobportal.service.VacancyService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/resume")
 public class ResumeController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ResumeController.class);
 
     @Autowired
     private ResumeRepo resumeRepo;
@@ -34,23 +38,32 @@ public class ResumeController {
 
     @GetMapping("/resumes")
     public String getResumes(Model model) {
+        logger.info("Барлық активті резюмелер сұралды");
         List<Resumes> resumes = resumeService.getAllActiveResumes();
+        logger.debug("Активті резюмелер саны: {}", resumes.size());
         model.addAttribute("resumes", resumes);
         return "homeem";
     }
 
     @GetMapping
     public String showForm(Model model) {
+        logger.info("Резюме қосу формасы көрсетілуде");
         model.addAttribute("resume", new Resumes());
         return "resume";
     }
 
+
     @PostMapping("/add")
     @ResponseBody
     public ResponseEntity<?> addResume(@RequestBody ResumeRequest resumeData) {
+        logger.info("Жаңа резюме қосу әрекеті: userId={}", resumeData.getUserId());
+        logger.debug("Резюме деректері: {}", resumeData);
         try {
             Users user = userRepo.findById(resumeData.getUserId())
-                    .orElseThrow(() -> new RuntimeException("Пайдаланушы табылмады"));
+                    .orElseThrow(() -> {
+                        logger.warn("Пайдаланушы табылмады: userId={}", resumeData.getUserId());
+                        return new RuntimeException("Пайдаланушы табылмады");
+                    });
 
             Resumes resume = new Resumes();
             resume.setUser(user);
@@ -65,24 +78,28 @@ public class ResumeController {
             resume.setDeleted(false);
 
             resumeRepo.save(resume);
-
+            logger.info("Резюме сәтті қосылды: resumeId={}", resume.getResumeId());
             return ResponseEntity.ok("Резюме сәтті қосылды!");
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Резюме қосу кезінде қате шықты: userId={}", resumeData.getUserId(), e);
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }
     @GetMapping("/user/{userId}")
     @ResponseBody
     public ResponseEntity<?> getUserResumes(@PathVariable Long userId) {
+        logger.info("Пайдаланушының резюмелері сұралды: userId={}", userId);
         try {
             Users user = userRepo.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("Пайдаланушы табылмады"));
-            java.util.List<Resumes> resumes = resumeRepo.findByUserAndIsDeletedFalse(user);
-
+                    .orElseThrow(() -> {
+                        logger.warn("Пайдаланушы табылмады: userId={}", userId);
+                        return new RuntimeException("Пайдаланушы табылмады");
+                    });
+            List<Resumes> resumes = resumeRepo.findByUserAndIsDeletedFalse(user);
+            logger.debug("Табылған резюмелер саны: {}", resumes.size());
             return ResponseEntity.ok(resumes);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Резюмелерді алу кезінде қате шықты: userId={}", userId, e);
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }
@@ -90,37 +107,73 @@ public class ResumeController {
     @PutMapping("/delete/{resumeId}")
     @ResponseBody
     public ResponseEntity<?> deleteResume(@PathVariable Long resumeId) {
-        Resumes resume = resumeRepo.findById(resumeId)
-                .orElseThrow(() -> new RuntimeException("Резюме табылмады"));
-        resume.setDeleted(true);
-        resumeRepo.save(resume);
-        return ResponseEntity.ok("Резюме корзинаға жіберілді");
+        logger.info("Резюме корзинаға жіберілуде: resumeId={}", resumeId);
+        try{
+            Resumes resume = resumeRepo.findById(resumeId)
+                    .orElseThrow(() -> {
+                        logger.warn("Резюме табылмады: resumeId={}", resumeId);
+                        return new RuntimeException("Резюме табылмады");
+                    });
+            resume.setDeleted(true);
+            resumeRepo.save(resume);
+            logger.info("Резюме сәтті корзинаға жіберілді: resumeId={}", resumeId);
+            return ResponseEntity.ok("Резюме корзинаға жіберілді");
+        }catch (Exception e) {
+            logger.error("Резюмелерді жою кезінде қате шықты: resumeId={}", resumeId, e);
+            return ResponseEntity.status(500).body("Қате: " + e.getMessage());
+        }
     }
 
     @GetMapping("/trash/{userId}")
     @ResponseBody
     public ResponseEntity<?> getDeletedResumes(@PathVariable Long userId) {
-        Users user = userRepo.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пайдаланушы табылмады"));
-        return ResponseEntity.ok(resumeRepo.findByUserAndIsDeletedTrue(user));
+        logger.info("Өшірілген резюмелер сұралды: userId={}", userId);
+        try{
+            Users user = userRepo.findById(userId)
+                    .orElseThrow(() -> {
+                        logger.warn("Пайдаланушы табылмады: userId={}", userId);
+                        return new RuntimeException("Пайдаланушы табылмады");
+                    });
+            List<Resumes> deleted = resumeRepo.findByUserAndIsDeletedTrue(user);
+            logger.debug("Өшірілген резюмелер саны: {}", deleted.size());
+            return ResponseEntity.ok(deleted);
+        }catch (Exception e) {
+            logger.error("Өшірілген резюмелерді алу кезінде қате шықты: userId={}", userId, e);
+            return ResponseEntity.status(500).body("Қате: " + e.getMessage());
+        }
     }
 
     @PutMapping("/restore/{resumeId}")
     @ResponseBody
     public ResponseEntity<?> restoreResume(@PathVariable Long resumeId) {
-        Resumes resume = resumeRepo.findById(resumeId)
-                .orElseThrow(() -> new RuntimeException("Резюме табылмады"));
-        resume.setDeleted(false);
-        resumeRepo.save(resume);
-        return ResponseEntity.ok("Резюме қалпына келтірілді");
+        logger.info("Резюме қалпына келтірілуде: resumeId={}", resumeId);
+        try{
+            Resumes resume = resumeRepo.findById(resumeId)
+                    .orElseThrow(() -> {
+                        logger.warn("Резюме табылмады: resumeId={}", resumeId);
+                        return new RuntimeException("Резюме табылмады");
+                    });
+            resume.setDeleted(false);
+            resumeRepo.save(resume);
+            logger.info("Резюме сәтті қалпына келтірілді: resumeId={}", resumeId);
+            return ResponseEntity.ok("Резюме қалпына келтірілді");
+        }catch (Exception e) {
+            logger.error("Резюмелерді қалпына келтіру кезінде қате шықты: resumeId={}", resumeId, e);
+            return ResponseEntity.status(500).body("Қате: " + e.getMessage());
+        }
     }
 
     @PutMapping("/update/{resumeId}")
     @ResponseBody
     public ResponseEntity<?> editResume(@PathVariable Long resumeId, @RequestBody ResumeRequest updatedData) {
+        logger.info("Резюме жаңарту әрекеті: resumeId={}", resumeId);
+        logger.debug("Жаңартылатын деректер: {}", updatedData);
         try {
             Resumes resume = resumeRepo.findById(resumeId)
-                    .orElseThrow(() -> new RuntimeException("Резюме табылмады"));
+                    .orElseThrow(() -> {
+                        logger.warn("Резюме табылмады: resumeId={}", resumeId);
+                        return new RuntimeException("Резюме табылмады");
+                    });
 
             if (updatedData.getTitle() != null) resume.setTitle(updatedData.getTitle());
             if (updatedData.getEducation() != null) resume.setEducation(updatedData.getEducation());
@@ -132,18 +185,22 @@ public class ResumeController {
             if (updatedData.getSalaryExpectation() != null) resume.setSalaryExpectation(updatedData.getSalaryExpectation());
 
             resumeRepo.save(resume);
-
+            logger.info("Резюме сәтті жаңартылды: resumeId={}", resumeId);
             return ResponseEntity.ok("Резюме сәтті жаңартылды!");
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Резюмелерді жаңарту кезінде қате шықты: resumeId={}", resumeId, e);
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }
 
     @GetMapping("/update/{resumeId}")
     public String editResumePage(@PathVariable Long resumeId, Model model) {
+        logger.info("Резюме өңдеу беті ашылды: resumeId={}", resumeId);
         Resumes resume = resumeRepo.findById(resumeId)
-                .orElseThrow(() -> new RuntimeException("Резюме табылмады"));
+                .orElseThrow(() -> {
+                    logger.warn("Резюме табылмады: resumeId={}", resumeId);
+                    return new RuntimeException("Резюме табылмады");
+                });
         model.addAttribute("resume", resume);
         return "resume-edit";
     }
@@ -151,6 +208,7 @@ public class ResumeController {
     @GetMapping("/get/{resumeId}")
     @ResponseBody
     public Resumes getResume(@PathVariable Long resumeId) {
+        logger.info("Резюме сұралды: resumeId={}", resumeId);
         return resumeRepo.findById(resumeId)
                 .orElseThrow(() -> new RuntimeException("Резюме табылмады"));
     }
