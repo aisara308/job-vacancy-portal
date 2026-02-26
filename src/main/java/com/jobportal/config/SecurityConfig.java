@@ -36,7 +36,8 @@ public class SecurityConfig {
                                 "/register",
                                 "/login",
                                 "/response", "/responseem", "/home", "/homeem",
-                                "/information", "/chat", "/chatem", "/profile",
+                                "/information", "/chats", "/chatsem", "/profile",
+                                "chat/**", "/api/chat/**",
                                 "/profileem", "/resume", "/vacancy", "/resume/**",
                                 "/resume-edit", "/vacancy/**",
                                 "/vacancies", "/vacancies/**", "/vacancy-edit",
@@ -46,7 +47,10 @@ public class SecurityConfig {
                                 "/js/**",
                                 "/images/**",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/chat/**",
+                                "/ws-chat/**",
+                                "/ws/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

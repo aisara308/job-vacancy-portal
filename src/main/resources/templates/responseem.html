@@ -283,6 +283,18 @@
             ? Number(resumeData.salaryExpectation).toLocaleString() + " ₸"
             : "Көрсетілмеген";
 
+        let chatButtonHtml = "";
+
+if (app.status === "interview") {
+    chatButtonHtml = `
+        <div class="chat-wrapper">
+            <button class="chat-btn" data-user-id="${userId}">
+                Чатқа өту
+            </button>
+        </div>
+    `;
+}
+
         card.innerHTML = `
             <div class="status-label ${app.status}">${statusText}</div>
             <h4>${resumeData?.title || "Вакансия"}</h4>
@@ -297,6 +309,8 @@
                     <button class="reject-btn" data-app-id="${app.applicationId}">Қабылдамау</button>
                 </div>
             ` : ""}
+
+            ${chatButtonHtml}
         `;
 
         // Добавляем обработчик клика на карточку
@@ -353,6 +367,22 @@
             }
         }
 
+        // Кнопка чата
+if (app.status === "interview") {
+    const chatBtn = card.querySelector(".chat-btn");
+
+    if (chatBtn) {
+        chatBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+
+            const userId = chatBtn.getAttribute("data-user-id");
+
+            // переход в чат
+            window.location.href = `/chat?userId=${userId}`;
+        });
+    }
+}
+
         return card;
     }
 
@@ -393,7 +423,7 @@
             <p><strong>Жұмыс іздеуші:</strong> ${userName}</p>
             <p><strong>Күтілетін жалақы:</strong> ${salaryText}</p>
             <p><strong>Локация:</strong> ${resumeData?.location || "Көрсетілмеген"}</p>
-            <p class="date">${inv.invitedAt ? new Date(inv.invitedAt).toLocaleDateString("kk-KZ") : ""}</p>
+            <p class="date">${inv.sentAt ? new Date(inv.sentAt).toLocaleDateString("kk-KZ") : ""}</p>
         `;
 
         card.addEventListener('click', async function(event) {

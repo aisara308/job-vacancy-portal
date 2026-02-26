@@ -39,8 +39,8 @@ public class jwtFilter extends OncePerRequestFilter {
                 path.startsWith("/information") ||
                 path.startsWith("/response") ||
                 path.startsWith("/responseem") ||
-                path.startsWith("/chat") ||
-                path.startsWith("/chatem") ||
+                path.startsWith("/chats") ||
+                path.startsWith("/chatsem") ||
                 path.startsWith("/profile") ||
                 path.startsWith("/profileem") ||
                 path.startsWith("/resume") ||

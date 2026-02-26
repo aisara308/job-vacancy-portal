@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Жауаптар беті</title>
     <link rel="stylesheet" th:href="@{/css/response.css}">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 </head>
 <body>
 
@@ -220,8 +222,29 @@
         const locationText = vacancyData.adres || vacancyData.location || vacancyData.address ||
                             itemData.adres || itemData.location || itemData.address || "";
         const titleText = vacancyData.title || itemData.vacancyTitle || itemData.vacancyName || "Вакансия";
-        const date = itemData.appliedAt || itemData.invitedAt || itemData.createdAt || "";
+        const date = itemData.appliedAt || itemData.invitedAt || itemData.sentAt || "";
         const formattedDate = date ? new Date(date).toLocaleDateString("kk-KZ") : "";
+
+        let chatButtonHtml = "";
+
+if (status === "invited" || status === "interview") {
+
+    // ID работодателя (владельца вакансии)
+    const employerId =
+        vacancyData.userId ||
+        vacancyData.ownerId ||
+        vacancyData.employerId ||
+        vacancyData.user?.userId;
+
+    if (employerId) {
+        chatButtonHtml = `
+            <button class="chat-btn"
+                onclick="event.stopPropagation(); goToChat(${employerId})">
+                Чатқа өту
+            </button>
+        `;
+    }
+}
 
         card.innerHTML = `
             <div class="status-label ${statusClass}">${statusText}</div>
@@ -229,6 +252,7 @@
             <p>${locationText}</p>
             ${salaryHtml}
             ${type === "invitation" ? `<p>${itemData.userName || "Жұмыс беруші"}</p>` : ""}
+            ${chatButtonHtml}
             <p class="date">${formattedDate}</p>
         `;
 
@@ -241,6 +265,34 @@
 
         return card;
     }
+
+    async function goToChat(employerId) {
+    try {
+        const response = await fetch(
+            `/api/chat/get-or-create?user2Id=${employerId}`,
+            {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            }
+        );
+
+        if (!response.ok) {
+            alert("Чат ашылмады");
+            return;
+        }
+
+        const chat = await response.json();
+
+        // Переход на страницу чата
+        window.location.href = `/chat/${chat.chatId}`;
+
+    } catch (error) {
+        console.error("Chat error:", error);
+        alert("Қате орын алды");
+    }
+}
 
     // Основная функция загрузки данных
     async function loadApplicationsAndInvitations() {

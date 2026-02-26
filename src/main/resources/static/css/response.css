@@ -191,6 +191,22 @@ body {
     border-radius: 6px;
 }
 
+.chat-btn {
+    margin-top: 10px;
+    background: #2d6a4f;
+    color: white;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    width: 70%;
+}
+
+.chat-btn:hover {
+    background: #1f5ed6;
+}
+
 .modal{
   display: none;
   position: fixed;

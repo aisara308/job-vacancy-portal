@@ -6,6 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 @Controller
@@ -38,7 +39,7 @@ public class HelloController {
 
     @GetMapping("/chat")
     public String chatPage() {
-        return "chat";
+        return "chats";
     }
 
     @GetMapping("/profile")
@@ -58,7 +59,7 @@ public class HelloController {
 
     @GetMapping("/chatem")
     public String chatemployerPage() {
-        return "chatem";
+        return "chatsem";
     }
 
     @GetMapping("/profileem")
@@ -74,6 +75,12 @@ public class HelloController {
     @GetMapping("/information")
     public String informationPage() {
         return "information";
+    }
+
+    @GetMapping("/chat/{id}")
+    public String openChatPage(@PathVariable Long id, Model model) {
+        model.addAttribute("chatId", id);
+        return "chat";
     }
 
 }
