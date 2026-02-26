@@ -9,6 +9,8 @@ import com.jobportal.repository.ResumeRepo;
 import com.jobportal.repository.UserRepo;
 import com.jobportal.repository.VacancyRepo;
 import com.jobportal.service.VacancyService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -24,6 +26,8 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/vacancies")
 public class VacancyController {
+
+    private static final Logger logger = LoggerFactory.getLogger(VacancyController.class);
 
     @Autowired
     private VacancyRepo vacancyRepo;
@@ -42,7 +46,9 @@ public class VacancyController {
 
     @GetMapping("/vacancies")
     public String getVacancies(Model model) {
+        logger.info("Барлық активті вакансиялар сұралды");
         List<Vacancies> vacancies = vacancyService.getAllActiveVacancies();
+        logger.debug("Активті вакансиялар саны: {}", vacancies.size());
         model.addAttribute("vacancies", vacancies);
         return "home";
     }
@@ -50,10 +56,15 @@ public class VacancyController {
     @PostMapping("/add")
     @ResponseBody
     public ResponseEntity<?> addVacancy(@RequestBody VacancyController.VacancyRequest vacancyData) {
+        logger.info("Жаңа вакансия қосу әрекеті: employerId={}", vacancyData.getEmployerId());
+        logger.debug("Вакансия деректері: {}", vacancyData);
         try {
             // Найдем пользователя по ID (который прислал фронт)
             Users employer = userRepo.findById(vacancyData.getEmployerId())
-                    .orElseThrow(() -> new RuntimeException("Пайдаланушы табылмады"));
+                    .orElseThrow(() -> {
+                        logger.warn("Пайдаланушы табылмады: employerId={}", vacancyData.getEmployerId());
+                        return new RuntimeException("Пайдаланушы табылмады");
+                    });
 
             Vacancies vacancy = new Vacancies();
             vacancy.setEmployerId(employer.getUserId().intValue()); // Преобразуем Long в Integer, если нужно
@@ -72,10 +83,10 @@ public class VacancyController {
             vacancy.setStatus("active");
 
             vacancyRepo.save(vacancy);
-
+            logger.info("Вакансия сәтті қосылды: vacancyId={}", vacancy.getVacancyId());
             return ResponseEntity.ok("Вакансия сәтті қосылды!");
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Вакансия қосу кезінде қате шықты: employerId={}", vacancyData.getEmployerId(), e);
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }
@@ -83,30 +94,37 @@ public class VacancyController {
     @GetMapping("/{vacancyId}")
     @ResponseBody
     public ResponseEntity<?> getVacancyById(@PathVariable Long vacancyId) {
+        logger.info("Вакансия сұралды: vacancyId={}", vacancyId);
         try {
             Vacancies vacancy = vacancyRepo.findById(vacancyId)
-                    .orElseThrow(() -> new RuntimeException("Вакансия табылмады"));
+                    .orElseThrow(() -> {
+                        logger.warn("Вакансия табылмады: vacancyId={}", vacancyId);
+                        return new RuntimeException("Вакансия табылмады");
+                    });
             return ResponseEntity.ok(vacancy);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Вакансияны алу кезінде қате шықты: vacancyId={}", vacancyId, e);
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }
 
-
     @GetMapping("/applications/my")
     @ResponseBody
     public ResponseEntity<?> getApplicationsForMyVacancies(Authentication authentication) {
+        String username = authentication.getName();
+        logger.info("Жұмысқа өтінімдер сұралды: employerEmail={}", username);
         try {
-            // Берём email текущего пользователя
-            String username = authentication.getName();
 
             // Находим пользователя (работодателя) по email
             Users employer = userRepo.findByEmail(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> {
+                        logger.warn("Пайдаланушы табылмады: email={}", username);
+                        return new RuntimeException("Пайдаланушы табылмады");
+                    });
 
             // Получаем все вакансии этого работодателя
             List<Vacancies> myVacancies = vacancyRepo.findByEmployerId(employer.getUserId().intValue());
+            logger.debug("Ешбір вакансия табылмады: {}", myVacancies.isEmpty());
 
             // Собираем ID вакансий
             List<Integer> vacancyIds = myVacancies.stream()
@@ -115,10 +133,11 @@ public class VacancyController {
 
             // Получаем все заявки на эти вакансии
             List<Jobapplications> applications = jobapplicationsRepo.findByVacancyIdIn(vacancyIds);
+            logger.info("Табылған өтінімдер саны: {}", applications.size());
 
             return ResponseEntity.ok(applications);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Өтінімдерді алу кезінде қате шықты: employerEmail={}", username, e);
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }
@@ -127,16 +146,20 @@ public class VacancyController {
     @GetMapping("/user/{userId}")
     @ResponseBody
     public ResponseEntity<?> getUserVacancies(@PathVariable Long userId) {
+        logger.info("Пайдаланушының вакансиялары сұралды: userId={}", userId);
         try {
             Users user = userRepo.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("Пайдаланушы табылмады"));
+                    .orElseThrow(() -> {
+                        logger.warn("Пайдаланушы табылмады: userId={}", userId);
+                        return new RuntimeException("Пайдаланушы табылмады");
+                    });
 
             // Ищем вакансии по employerId
             List<Vacancies> vacancies = vacancyRepo.findByEmployerId(user.getUserId().intValue());
-
+            logger.debug("Табылған вакансиялар саны: {}", vacancies.size());
             return ResponseEntity.ok(vacancies);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Вакансияларды алу кезінде қате шықты: userId={}", userId, e);
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }

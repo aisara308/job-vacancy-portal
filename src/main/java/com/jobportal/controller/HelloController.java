@@ -76,6 +76,10 @@ public class HelloController {
     public String informationPage() {
         return "information";
     }
+    @GetMapping("/enter-code")
+    public String enterCodePage() {
+        return "enter-code";
+    }
 
     @GetMapping("/chat/{id}")
     public String openChatPage(@PathVariable Long id, Model model) {

@@ -17,12 +17,15 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.jobportal.model.Users;
 
 @Controller
 @RequestMapping("/invitations")
 public class JobinvitationsController {
+
+    private static final Logger logger = LoggerFactory.getLogger(JobinvitationsController.class);
 
     @Autowired
     private UserRepo userRepository;
@@ -39,47 +42,67 @@ public class JobinvitationsController {
                                             Authentication authentication) {
 
         String username = authentication.getName();
-        Users user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        logger.info("Шақыру жіберу әрекеті басталды: employerEmail={}, resumeId={}, vacancyId={}",
+                username, request.getResumeId(), request.getVacancyId());
 
-        Jobinvitations invitation = new Jobinvitations();
-        invitation.setResumeId(request.getResumeId());
-        invitation.setVacancyId(request.getVacancyId());
-        invitation.setEmployerId(user.getUserId().intValue());
+        try{
+            Users user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> {
+                        logger.warn("Пайдаланушы табылмады: email={}", username);
+                        return new RuntimeException("User not found");
+                    });
 
-        boolean alreadyExists = repository.existsByResumeIdAndVacancyId(
-                invitation.getResumeId(),
-                invitation.getVacancyId()
-        );
+            Jobinvitations invitation = new Jobinvitations();
+            invitation.setResumeId(request.getResumeId());
+            invitation.setVacancyId(request.getVacancyId());
+            invitation.setEmployerId(user.getUserId().intValue());
 
-        if (alreadyExists) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("Сіз осы вакансиямен осы түйіндемеге шақыру жібергенсіз.");
+            boolean alreadyExists = repository.existsByResumeIdAndVacancyId(
+                    invitation.getResumeId(),
+                    invitation.getVacancyId()
+            );
+
+            if (alreadyExists) {
+                logger.warn("Шақыру бар: employerEmail={}, resumeId={}, vacancyId={}",
+                        username, request.getResumeId(), request.getVacancyId());
+                return ResponseEntity
+                        .badRequest()
+                        .body("Сіз осы вакансиямен осы түйіндемеге шақыру жібергенсіз.");
+            }
+
+            invitation.setStatus("sent");
+            invitation.setSentAt(LocalDateTime.now());
+
+            repository.save(invitation);
+            logger.info("Шақыру сәтті жіберілді: employerEmail={}, resumeId={}, vacancyId={}",
+                    username, request.getResumeId(), request.getVacancyId());
+
+            return ResponseEntity.ok("Invitation sent");
+        }catch (Exception e) {
+            logger.error("Шақыру жіберу кезінде қате шықты: employerEmail={}, resumeId={}, vacancyId={}",
+                    username, request.getResumeId(), request.getVacancyId(), e);
+            return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
-
-        invitation.setStatus("sent");
-        invitation.setSentAt(LocalDateTime.now());
-
-        repository.save(invitation);
-
-        return ResponseEntity.ok("Invitation sent");
     }
 
     @GetMapping("/my")
     @ResponseBody
     public ResponseEntity<?> getMyInvitation(Authentication authentication) {
+        String username = authentication.getName();
+        logger.info("Менің жіберген шақыруларым сұралды: employerEmail={}", username);
         try {
-            String username = authentication.getName();
-
             Users user = userRepository.findByEmail(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> {
+                        logger.warn("Пайдаланушы табылмады: email={}", username);
+                        return new RuntimeException("User not found");
+                    });
 
             java.util.List<Jobinvitations> invitations = repository.findByEmployerId(user.getUserId().intValue());
+            logger.debug("Табылған шақырулар саны: {}", invitations.size());
 
             return ResponseEntity.ok(invitations);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Шақыруларды алу кезінде қате шықты: employerEmail={}", username, e);
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }
@@ -87,13 +110,16 @@ public class JobinvitationsController {
     @GetMapping("/me")
     @ResponseBody
     public ResponseEntity<?> getInvitationsForMyResumes(Authentication authentication) {
+        String username = authentication.getName();
+        logger.info("Менің түйіндемелеріме шақырулар сұралды: applicantEmail={}", username);
         try {
-            // Берём email текущего пользователя
-            String username = authentication.getName();
 
             // Находим пользователя (работодателя) по email
             Users applicant = userRepository.findByEmail(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> {
+                        logger.warn("Пайдаланушы табылмады: email={}", username);
+                        return new RuntimeException("User not found");
+                    });
 
             // Получаем все вакансии этого работодателя
             List<Resumes> myResumes = resumeRepo.findByUser(applicant);
@@ -105,10 +131,11 @@ public class JobinvitationsController {
 
             // Получаем все заявки на эти вакансии
             List<Jobinvitations> invitations = repository.findByResumeIdIn(resumeIds);
+            logger.debug("Табылған шақырулар саны: {}", invitations.size());
 
             return ResponseEntity.ok(invitations);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Түйіндемелерге шақыруларды алу кезінде қате шықты: applicantEmail={}", username, e);
             return ResponseEntity.status(500).body("Қате: " + e.getMessage());
         }
     }

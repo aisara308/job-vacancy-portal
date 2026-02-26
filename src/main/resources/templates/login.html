@@ -17,12 +17,8 @@
             <button type="button" class="eye-btn" id="toggleLoginPassword" tabindex="-1">👁️</button>
         </div>
 
-        <a href="/reset-password" class="forgot-link">Құпиясөзді ұмыттыңыз ба?</a>
+        <a href="#" class="forgot-link" onclick="openResetModal()">Құпиясөзді ұмыттыңыз ба?</a>
 
-        <div id="resetPasswordDiv" style="display:none;">
-            <input type="email" id="resetEmail" placeholder="Поштаны енгізіңіз">
-            <button id="sendReset">Сбросить пароль</button>
-        </div>
         <button type="submit" class="login-btn">Кіру</button>
     </form>
 
@@ -71,6 +67,39 @@
     alert("Серверге қосылу мүмкін болмады");
   }
 }
+function openResetModal() {
+  document.getElementById("resetModal").style.display = "flex";
+}
+
+function closeResetModal() {
+  document.getElementById("resetModal").style.display = "none";
+}
+
+async function sendResetCodeModal() {
+    const email = document.getElementById("resetEmailModal").value.trim();
+    if (!email) return alert("Почту енгізіңіз");
+
+    try {
+        const response = await fetch("/send-reset-code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+
+        if (response.ok) {
+            localStorage.setItem("resetEmail", email);
+            window.location.href = "/enter-code";
+        } else if (response.status === 404) {
+            alert("Пошта табылмады.");
+        } else {
+            const err = await response.text();
+            alert("Қате: " + err);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Сервермен байланыс жоқ.");
+    }
+}
     // Показать/скрыть пароль
 const togglePwdLogin = document.getElementById("toggleLoginPassword");
 const pwdInputLogin = document.getElementById("loginPassword");
@@ -114,6 +143,13 @@ document.getElementById("sendReset").addEventListener("click", async () => {
     }
 });
 </script>
-
+<div id="resetModal" class="modal">
+    <div class="modal-content">
+        <h3>Құпиясөзді қалпына келтіру</h3>
+        <input type="email" id="resetEmailModal" placeholder="Поштаны енгізіңіз">
+        <button onclick="closeResetModal()" class="modal-btn">Жабу</button>
+        <button onclick="sendResetCodeModal()" class="modal-btn">Код жіберу</button>
+    </div>
+</div>
 </body>
 </html>

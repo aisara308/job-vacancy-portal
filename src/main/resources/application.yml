@@ -1,0 +1,12 @@
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: mc.dindon1898@gmail.com
+    password: ngcrilehifmcraol
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
