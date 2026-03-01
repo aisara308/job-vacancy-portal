@@ -140,6 +140,17 @@ public class JobinvitationsController {
         }
     }
 
+    @GetMapping("/count/{resumeId}")
+    @ResponseBody
+    public ResponseEntity<?> getApplicationsCount(@PathVariable Integer resumeId) {
+        try {
+            long count = repository.countByResumeId(resumeId);
+            return ResponseEntity.ok(count);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Қате: " + e.getMessage());
+        }
+    }
+
 
     public static class InvitationRequest {
         private Integer resumeId;

@@ -143,6 +143,17 @@ public class JobapplicationsController {
         }
     }
 
+    @GetMapping("/count/{vacancyId}")
+    @ResponseBody
+    public ResponseEntity<?> getApplicationsCount(@PathVariable Integer vacancyId) {
+        try {
+            long count = repository.countByVacancyId(vacancyId);
+            return ResponseEntity.ok(count);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Қате: " + e.getMessage());
+        }
+    }
+
     public static class StatusUpdateRequest {
         private String status;
 

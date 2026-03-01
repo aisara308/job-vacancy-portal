@@ -17,4 +17,5 @@ public interface ChatRepo extends JpaRepository<Chat, Long> {
 """)
     Optional<Chat> findExistingChat(@Param("user1") Long user1,
                                     @Param("user2") Long user2);
+    List<Chat> findByUser1UserIdOrUser2UserId(Long user1Id, Long user2Id);
 }

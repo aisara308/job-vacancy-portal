@@ -2,6 +2,7 @@ body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
   background-color: #c0ae94;
+  padding-bottom: 60px;
 }
 
 .profile-header {

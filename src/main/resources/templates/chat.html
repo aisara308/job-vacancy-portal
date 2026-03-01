@@ -1,30 +1,23 @@
 <!DOCTYPE html>
-<html lang="kk">
+<html lang="kk" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <title>Чат</title>
 
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <link rel="stylesheet" th:href="@{/css/chat.css}">
 
-    <style>
-        body { font-family: Arial; margin: 0; }
-        .chat-container { height: 90vh; display: flex; flex-direction: column; }
-        .messages { flex: 1; overflow-y: auto; padding: 15px; }
-        .message { margin-bottom: 10px; padding: 8px; background-color: #f1f1f1; border-radius: 5px; }
-        .my-message { background-color: #dcf8c6; text-align: right; }
-        .input-area { display: flex; padding: 10px; border-top: 1px solid #ccc; }
-        input { flex: 1; padding: 8px; }
-        button { padding: 8px 15px; }
-    </style>
 </head>
 <body>
 
 <div class="chat-container">
-    <div id="messages" class="messages"></div>
+    <div id="messages" class="messages">
+        <div id="loadingMessages" class="loading">Хабарлар жүктелуде...</div>
+    </div>
 
     <div class="input-area">
-        <input type="text" id="messageInput" placeholder="Хабар жазу...">
+        <input type="text" id="messageInput" placeholder="Хабар жазу..." autofocus>
         <button onclick="sendMessage()">Жіберу</button>
     </div>
 </div>
@@ -33,27 +26,23 @@
     const chatId = [[${chatId}]];
     const token = localStorage.getItem("token");
 
-    // Для отладки
     console.log("Chat ID:", chatId);
     console.log("Token:", token ? "есть" : "нет");
 
     if (!token) {
-        alert("Сіз жүйеге кірмегенсіз. Бетті жаңартып, кіріңіз.");
-        // Перенаправление на страницу входа
+        alert("Сіз жүйеге кірмегенсіз.");
         window.location.href = "/login";
     }
 
     let stompClient = null;
     let currentUserEmail = null;
+    let lastMessageDate = null; // Для отслеживания последней отображенной даты
 
     function connect() {
         const socket = new SockJS('/ws');
         stompClient = Stomp.over(socket);
-
-        // Отключаем логирование STOMP (для чистоты консоли)
         stompClient.debug = null;
 
-        // Заголовки с токеном
         const headers = {
             'Authorization': 'Bearer ' + token
         };
@@ -61,29 +50,33 @@
         stompClient.connect(headers, function (frame) {
             console.log("WebSocket подключен успешно");
 
-            // Подписываемся на чат
             stompClient.subscribe(`/topic/chat.${chatId}`, function (message) {
                 const msg = JSON.parse(message.body);
                 showMessage(msg);
             });
 
-            // Получаем информацию о текущем пользователе
             getUserInfo();
+            loadMessageHistory();
 
         }, function (error) {
             console.error("Ошибка подключения к WebSocket:", error);
-            alert("Не удалось подключиться к чату. Проверьте подключение к интернету.");
+            document.getElementById('loadingMessages').innerHTML =
+                '<div class="error">Қосылу мүмкін емес. Бетті жаңартыңыз.</div>';
         });
     }
 
     function getUserInfo() {
-        // Получаем информацию о текущем пользователе через REST API
         fetch('/api/user', {
             headers: {
                 'Authorization': 'Bearer ' + token
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки пользователя');
+            }
+            return response.json();
+        })
         .then(data => {
             currentUserEmail = data.email;
             console.log("Текущий пользователь:", currentUserEmail);
@@ -93,11 +86,135 @@
         });
     }
 
+    // Функция для форматирования даты
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        // Сравниваем даты без времени
+        const isToday = date.toDateString() === today.toDateString();
+        const isYesterday = date.toDateString() === yesterday.toDateString();
+
+        if (isToday) {
+            return 'Бүгін';
+        } else if (isYesterday) {
+            return 'Кеше';
+        } else {
+            // Формат: 15 наурыз 2024
+            const months = ['қаңтар', 'ақпан', 'наурыз', 'сәуір', 'мамыр', 'маусым',
+                           'шілде', 'тамыз', 'қыркүйек', 'қазан', 'қараша', 'желтоқсан'];
+            return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+        }
+    }
+
+    // Функция для создания разделителя дат
+    function createDateDivider(dateString) {
+        const divider = document.createElement('div');
+        divider.className = 'date-divider';
+
+        const span = document.createElement('span');
+        span.innerText = formatDate(dateString);
+
+        divider.appendChild(span);
+        return divider;
+    }
+
+    function markChatAsRead() {
+    if (!token) return;
+
+    fetch(`/api/chat/${chatId}/read`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': 'Bearer ' + token
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            console.error('Не удалось пометить чат как прочитанный', response.status);
+        } else {
+            console.log('Чат помечен как прочитанный');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при пометке чата как прочитанного:', error);
+    });
+}
+
+// Вызовем после загрузки истории сообщений
+function loadMessageHistory() {
+    console.log("Загрузка истории сообщений для чата:", chatId);
+
+    document.getElementById('loadingMessages').style.display = 'block';
+
+    fetch(`/api/chat/${chatId}/messages`, {
+        headers: {
+            'Authorization': 'Bearer ' + token
+        }
+    })
+    .then(response => {
+        console.log("Статус ответа:", response.status);
+
+        if (response.status === 403) {
+            throw new Error('Доступ запрещен');
+        }
+        if (response.status === 404) {
+            throw new Error('Чат не найден');
+        }
+        if (!response.ok) {
+            throw new Error('Ошибка загрузки: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(messages => {
+        console.log("Загружено сообщений:", messages.length);
+
+        document.getElementById('loadingMessages').style.display = 'none';
+
+        const container = document.getElementById('messages');
+        container.innerHTML = ''; // Очищаем
+
+        if (messages.length === 0) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'message system-message';
+            emptyDiv.innerText = 'Хабарлар жоқ. Бірінші болып хабарласыңыз!';
+            container.appendChild(emptyDiv);
+        } else {
+            lastMessageDate = null; // Сбрасываем последнюю дату
+
+            // Группируем сообщения по датам
+            messages.forEach(msg => {
+                const messageDate = new Date(msg.sentAt).toDateString();
+
+                // Если дата изменилась, добавляем разделитель
+                if (messageDate !== lastMessageDate) {
+                    const divider = createDateDivider(msg.sentAt);
+                    container.appendChild(divider);
+                    lastMessageDate = messageDate;
+                }
+
+                showMessage(msg, false);
+            });
+        }
+
+        container.scrollTop = container.scrollHeight;
+
+        // **ВЫЗЫВАЕМ ЭНДПОИНТ ДЛЯ ПРОЧТЕНИЯ**
+        markChatAsRead();
+    })
+    .catch(error => {
+        console.error("Ошибка загрузки истории:", error);
+        document.getElementById('loadingMessages').innerHTML =
+            `<div class="error">Қате: ${error.message}</div>`;
+    });
+}
+
     function sendMessage() {
         const input = document.getElementById("messageInput");
-        const content = input.value;
+        const content = input.value.trim();
 
-        if (!content.trim()) return;
+        if (!content) return;
 
         if (!stompClient || !stompClient.connected) {
             alert("Нет подключения к серверу");
@@ -107,45 +224,102 @@
         console.log("Отправка сообщения:", { chatId: chatId, content: content });
 
         stompClient.send("/app/chat.send", {}, JSON.stringify({
-            chatId: chatId,
+            chatId: parseInt(chatId),
             content: content
         }));
 
         input.value = "";
     }
 
-function showMessage(msg) {
-    const container = document.getElementById("messages");
+    function showMessage(msg, scrollToBottom = true) {
+        const container = document.getElementById("messages");
 
-    const div = document.createElement("div");
-    div.className = "message";
+        const loadingEl = document.getElementById('loadingMessages');
+        if (loadingEl) {
+            loadingEl.style.display = 'none';
+        }
 
-    // Используем поля из DTO
-    let senderName = msg.senderName || msg.senderEmail || "Неизвестный";
+        // Проверяем дату сообщения и добавляем разделитель если нужно
+        if (msg.sentAt) {
+            const messageDate = new Date(msg.sentAt).toDateString();
 
-    // Добавляем класс для своих сообщений
-    if (currentUserEmail && msg.senderEmail === currentUserEmail) {
-        div.classList.add("my-message");
-    }
+            // Если дата изменилась (для новых сообщений)
+            if (messageDate !== lastMessageDate) {
+                const divider = createDateDivider(msg.sentAt);
+                container.appendChild(divider);
+                lastMessageDate = messageDate;
+            }
+        }
 
-    // Форматируем время если есть
-    let timeStr = "";
-    if (msg.sentAt) {
-        try {
-            const time = new Date(msg.sentAt);
-            timeStr = ` [${time.getHours()}:${time.getMinutes().toString().padStart(2, '0')}]`;
-        } catch (e) {
-            console.log("Ошибка парсинга даты:", e);
+        const div = document.createElement("div");
+        div.className = "message";
+
+        // Определяем отправителя
+        let senderName = "Неизвестный";
+        let senderEmail = "";
+
+        if (msg.senderName) {
+            senderName = msg.senderName;
+            senderEmail = msg.senderEmail || "";
+        } else if (msg.sender) {
+            senderName = msg.sender.fullName || msg.sender.email || "Пользователь";
+            senderEmail = msg.sender.email || "";
+        } else if (msg.senderEmail) {
+            senderName = msg.senderEmail;
+            senderEmail = msg.senderEmail;
+        }
+
+        // Добавляем класс для своих сообщений
+        if (currentUserEmail && (senderEmail === currentUserEmail)) {
+            div.classList.add("my-message");
+        }
+
+        // Форматируем время
+        let timeStr = "";
+        const sentAt = msg.sentAt || msg.timestamp;
+        if (sentAt) {
+            try {
+                const time = new Date(sentAt);
+                if (!isNaN(time.getTime())) {
+                    const hours = time.getHours().toString().padStart(2, '0');
+                    const minutes = time.getMinutes().toString().padStart(2, '0');
+                    timeStr = `${hours}:${minutes}`;
+                }
+            } catch (e) {
+                console.log("Ошибка парсинга даты:", e);
+            }
+        }
+
+        // Создаем структуру сообщения с именем и временем
+            div.innerHTML = `
+        <span class="sender-name">${senderName}</span>
+        <div class="message-content">${escapeHtml(msg.content || '')}</div>
+        <span class="message-time">${timeStr}</span>
+    `;
+
+        container.appendChild(div);
+
+        if (scrollToBottom) {
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 50);
         }
     }
 
-    div.innerText = senderName + timeStr + ": " + msg.content;
+    // Функция для экранирования HTML (безопасность)
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
-    container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
-}
+    // Отправка по Enter
+    document.getElementById('messageInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
 
-    // Подключаемся при загрузке страницы
     window.onload = function() {
         connect();
     };

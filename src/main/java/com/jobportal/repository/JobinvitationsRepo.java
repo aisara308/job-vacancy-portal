@@ -12,4 +12,5 @@ public interface JobinvitationsRepo extends JpaRepository<Jobinvitations, Intege
     List<Jobinvitations> findByEmployerId(Integer employerId);
     List<Jobinvitations> findByResumeIdIn(List<Integer> resumeIds);
     boolean existsByResumeIdAndVacancyId(Integer resumeId, Integer vacancyId);
+    long countByResumeId(Integer resumeId);
 }

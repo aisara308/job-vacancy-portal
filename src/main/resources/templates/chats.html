@@ -1,13 +1,154 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="kk" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Мои чаты</title>
     <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/chats.css}">
 </head>
 <body>
 
+<div class="chats-container">
+    <div class="chats-header">
+        <h1>Менің чаттарым</h1>
+        <button class="refresh-btn" onclick="loadChats()" id="refreshBtn">
+            Жаңарту
+        </button>
+    </div>
+
+    <div id="chatsList" class="chats-list">
+        <div class="loading">Жүктелуде...</div>
+    </div>
+</div>
+
 <div th:replace="index :: footer"></div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("Кіру қажет!");
+            window.location.href = "/login";
+            return;
+        }
+        loadChats();
+    });
+
+    function loadChats() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            window.location.href = "/login";
+            return;
+        }
+
+        const chatsList = document.getElementById('chatsList');
+        const refreshBtn = document.getElementById('refreshBtn');
+
+        chatsList.innerHTML = '<div class="loading">Жүктелуде...</div>';
+        refreshBtn.disabled = true;
+
+        fetch('/api/chat/my-chats', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            }
+        })
+        .then(response => {
+            if (response.status === 401 || response.status === 403) {
+                localStorage.removeItem("token");
+                window.location.href = "/login";
+                throw new Error('Авторизация қажет');
+            }
+            if (!response.ok) {
+                throw new Error('Қате: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(chats => {
+            refreshBtn.disabled = false;
+
+            if (chats.length === 0) {
+                chatsList.innerHTML = `
+                    <div class="no-chats">
+                        <p>Сізде әлі чаттар жоқ</p>
+                        <p>Басқа пайдаланушылармен сөйлесуді бастаңыз!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let chatsHtml = '';
+            chats.forEach(chat => {
+                const firstLetter = chat.otherUserName ? chat.otherUserName.charAt(0).toUpperCase() : '?';
+                const messageTime = chat.lastMessageTime ? new Date(chat.lastMessageTime) : null;
+                const timeString = messageTime ? formatMessageTime(messageTime) : '';
+                const lastMessageText = chat.lastMessageFromMe
+    ? 'Сіз: ' + (chat.lastMessage || '')
+    : (chat.lastMessage || 'Хабарлама жоқ');
+
+                chatsHtml += `
+                    <a href="/chat/${chat.chatId}" class="chat-card">
+                        <div class="chat-avatar">${firstLetter}</div>
+                        <div class="chat-info">
+                            <div class="chat-user-name">${escapeHtml(chat.otherUserName || 'Пайдаланушы')}</div>
+                            <div class="chat-last-message">
+                            ${escapeHtml(lastMessageText)}
+                            </div>
+                        </div>
+                        <div class="chat-message-info">
+    <div class="chat-time">${timeString}</div>
+    ${chat.hasUnreadMessages ? '<div class="message-indicator">Жаңа</div>' : ''}
+</div>
+                    </a>
+                `;
+            });
+
+            chatsList.innerHTML = chatsHtml;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            refreshBtn.disabled = false;
+            chatsList.innerHTML = `
+                <div class="error">
+                    <p>Қате: ${error.message}</p>
+                    <button class="refresh-btn" onclick="loadChats()">Қайталау</button>
+                </div>
+            `;
+        });
+    }
+
+    function formatMessageTime(date) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+        if (messageDate.getTime() === today.getTime()) {
+            return date.toLocaleTimeString('kk-KZ', { hour: '2-digit', minute: '2-digit' });
+        } else if (messageDate.getTime() === yesterday.getTime()) {
+            return 'Кеше';
+        } else if (now.getFullYear() === date.getFullYear()) {
+            return date.toLocaleDateString('kk-KZ', { day: 'numeric', month: 'short' });
+        } else {
+            return date.toLocaleDateString('kk-KZ', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+    }
+
+    function escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Обновление каждые 30 секунд
+    setInterval(loadChats, 30000);
+</script>
 </body>
 </html>

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Жауаптар беті</title>
     <link rel="stylesheet" th:href="@{/css/response.css}">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 </head>
 <body>
 
@@ -128,9 +130,48 @@
         }
     }
 
+    // Функция для перехода в чат
+    async function goToChat(userId) {
+        console.log("goToChat called with userId:", userId);
+
+        if (!userId) {
+            console.error("User ID is missing");
+            alert("Чат ашу үшін пайдаланушы ID көрсетілмеген");
+            return;
+        }
+
+        try {
+            console.log("Creating/getting chat with user:", userId);
+
+            const response = await fetch(`/api/chat/get-or-create?user2Id=${userId}`, {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + token,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Chat creation failed:", errorText);
+                alert("Чат ашылмады");
+                return;
+            }
+
+            const chat = await response.json();
+            console.log("Chat created/retrieved:", chat);
+
+            // Переход на страницу чата
+            window.location.href = `/chat/${chat.chatId}`;
+
+        } catch (error) {
+            console.error("Chat error:", error);
+            alert("Қате орын алды");
+        }
+    }
+
     // Функция для открытия модального окна с резюме
     function openResumeModal(resume) {
-
         if (!resume) {
             console.error("Resume data is null or undefined");
             alert("Резюме туралы мәліметтер жоқ");
@@ -210,7 +251,6 @@
     }
 
     async function loadResumeDetails(resumeId) {
-
         if (!resumeId) {
             console.warn("No resume ID provided");
             return null;
@@ -218,10 +258,12 @@
 
         // Проверяем кэш резюме
         if (resumeCache.has(resumeId)) {
+            console.log("Using cached resume data for ID:", resumeId);
             return resumeCache.get(resumeId);
         }
 
         try {
+            console.log("Loading resume details for ID:", resumeId);
             const res = await fetch(`/resume/get/${resumeId}`, {
                 headers: {
                     "Authorization": "Bearer " + token,
@@ -231,6 +273,7 @@
 
             if (res.ok) {
                 const data = await res.json();
+                console.log("Resume data loaded:", data);
                 // Сохраняем в кэш
                 resumeCache.set(resumeId, data);
                 return data;
@@ -246,24 +289,82 @@
         }
     }
 
+    // Функция для получения userId из различных источников
+    function extractUserId(resumeData, app) {
+        console.log("Extracting userId from resumeData:", resumeData);
+        console.log("Extracting userId from app:", app);
+
+        // 1. Проверяем resumeData.user?.userId (из логов видно, что user содержит userId)
+        if (resumeData?.user?.userId) {
+            console.log("Found userId in resumeData.user.userId:", resumeData.user.userId);
+            return resumeData.user.userId;
+        }
+
+        // 2. Проверяем resumeData.user?.id
+        if (resumeData?.user?.id) {
+            console.log("Found userId in resumeData.user.id:", resumeData.user.id);
+            return resumeData.user.id;
+        }
+
+        // 3. Проверяем resumeData.userId
+        if (resumeData?.userId) {
+            console.log("Found userId in resumeData.userId:", resumeData.userId);
+            return resumeData.userId;
+        }
+
+        // 4. Проверяем app.userId
+        if (app?.userId) {
+            console.log("Found userId in app.userId:", app.userId);
+            return app.userId;
+        }
+
+        // 5. Проверяем app.user?.id
+        if (app?.user?.id) {
+            console.log("Found userId in app.user.id:", app.user.id);
+            return app.user.id;
+        }
+
+        // 6. Проверяем app.user?.userId
+        if (app?.user?.userId) {
+            console.log("Found userId in app.user.userId:", app.user.userId);
+            return app.user.userId;
+        }
+
+        console.log("No userId found in any source");
+        return null;
+    }
+
     async function createApplicationCard(app, resumeData) {
         const card = document.createElement("div");
         card.className = "application-card";
         card.style.cursor = "pointer";
 
-        // Получаем имя пользователя из резюме
-        let userName = "Атауы жоқ";
+        // Получаем userId
+        const userId = extractUserId(resumeData, app);
 
-        if (resumeData && resumeData.user) {
-            // Берем имя из объекта user в резюме
-            const user = resumeData.user;
-            userName = user.name || user.fullName || user.username || user.email || `Пайдаланушы №${user.id}`;
-        } else if (app.userName) {
-            // Если нет в резюме, берем из app
+        // Получаем имя пользователя
+        let userName = "Атауы жоқ";
+        if (resumeData?.user?.name) {
+            userName = resumeData.user.name;
+        } else if (resumeData?.user?.fullName) {
+            userName = resumeData.user.fullName;
+        } else if (resumeData?.user?.username) {
+            userName = resumeData.user.username;
+        } else if (app?.userName) {
             userName = app.userName;
+        } else if (userId) {
+            // Если есть userId, но нет имени, пробуем загрузить имя
+            getUserNameById(userId).then(name => {
+                // Обновляем имя в карточке если нужно
+                const nameElement = card.querySelector('.user-name');
+                if (nameElement) {
+                    nameElement.textContent = name;
+                }
+            });
+            userName = `Пайдаланушы №${userId}`;
         }
 
-        const userId = resumeData?.user?.id || app.userId;
+        console.log("Application card - User ID:", userId, "User Name:", userName, "Status:", app.status);
 
         card.setAttribute('data-application-id', app.applicationId);
         card.setAttribute('data-resume-id', app.resumeId || '');
@@ -283,22 +384,25 @@
             ? Number(resumeData.salaryExpectation).toLocaleString() + " ₸"
             : "Көрсетілмеген";
 
+        // Чат батырмасының HTML коды - ТЕК ЕСЛИ userId БАР
         let chatButtonHtml = "";
-
-if (app.status === "interview") {
-    chatButtonHtml = `
-        <div class="chat-wrapper">
-            <button class="chat-btn" data-user-id="${userId}">
-                Чатқа өту
-            </button>
-        </div>
-    `;
-}
+        if (app.status === "interview") {
+            if (userId) {
+                chatButtonHtml = `
+                    <button class="chat-btn" data-user-id="${userId}">
+                        Чатқа өту
+                    </button>
+                `;
+                console.log("Chat button WILL BE SHOWN for user:", userId);
+            } else {
+                console.log("Chat button NOT shown - no userId for application:", app.applicationId);
+            }
+        }
 
         card.innerHTML = `
             <div class="status-label ${app.status}">${statusText}</div>
             <h4>${resumeData?.title || "Вакансия"}</h4>
-            <p><strong>Жұмыс іздеуші:</strong> ${userName}</p>
+            <p><strong>Жұмыс іздеуші:</strong> <span class="user-name">${userName}</span></p>
             <p><strong>Күтілетін жалақы:</strong> ${salaryText}</p>
             <p><strong>Локация:</strong> ${resumeData?.location || "Көрсетілмеген"}</p>
             <p class="date">${app.appliedAt ? new Date(app.appliedAt).toLocaleDateString("kk-KZ") : ""}</p>
@@ -352,36 +456,34 @@ if (app.status === "interview") {
 
             if (acceptBtn) {
                 acceptBtn.addEventListener("click", async (e) => {
-                    e.stopPropagation(); // Предотвращаем всплытие события
-                    e.preventDefault(); // Предотвращаем стандартное поведение
+                    e.stopPropagation();
+                    e.preventDefault();
                     await updateStatus(app.applicationId, "interview");
                 });
             }
 
             if (rejectBtn) {
                 rejectBtn.addEventListener("click", async (e) => {
-                    e.stopPropagation(); // Предотвращаем всплытие события
-                    e.preventDefault(); // Предотвращаем стандартное поведение
+                    e.stopPropagation();
+                    e.preventDefault();
                     await updateStatus(app.applicationId, "rejected");
                 });
             }
         }
 
-        // Кнопка чата
-if (app.status === "interview") {
-    const chatBtn = card.querySelector(".chat-btn");
-
-    if (chatBtn) {
-        chatBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-
-            const userId = chatBtn.getAttribute("data-user-id");
-
-            // переход в чат
-            window.location.href = `/chat?userId=${userId}`;
-        });
-    }
-}
+        // Кнопка чата үшін бөлек обработчик
+        if (app.status === "interview" && userId) {
+            const chatBtn = card.querySelector(".chat-btn");
+            if (chatBtn) {
+                chatBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const targetUserId = chatBtn.getAttribute('data-user-id');
+                    console.log("Chat button clicked, userId:", targetUserId);
+                    goToChat(targetUserId);
+                });
+            }
+        }
 
         return card;
     }
@@ -391,19 +493,30 @@ if (app.status === "interview") {
         card.className = "application-card";
         card.style.cursor = "pointer";
 
-        // Получаем имя пользователя из резюме
-        let userName = "Атауы жоқ";
+        // Получаем userId
+        const userId = extractUserId(resumeData, inv);
 
-        if (resumeData && resumeData.user) {
-            // Берем имя из объекта user в резюме
-            const user = resumeData.user;
-            userName = user.name || user.fullName || user.username || user.email || `Пайдаланушы №${user.id}`;
-        } else if (inv.userName) {
-            // Если нет в резюме, берем из inv
+        // Получаем имя пользователя
+        let userName = "Атауы жоқ";
+        if (resumeData?.user?.name) {
+            userName = resumeData.user.name;
+        } else if (resumeData?.user?.fullName) {
+            userName = resumeData.user.fullName;
+        } else if (resumeData?.user?.username) {
+            userName = resumeData.user.username;
+        } else if (inv?.userName) {
             userName = inv.userName;
+        } else if (userId) {
+            getUserNameById(userId).then(name => {
+                const nameElement = card.querySelector('.user-name');
+                if (nameElement) {
+                    nameElement.textContent = name;
+                }
+            });
+            userName = `Пайдаланушы №${userId}`;
         }
 
-        const userId = resumeData?.user?.id || inv.userId;
+        console.log("Invitation card - User ID:", userId, "User Name:", userName);
 
         card.setAttribute('data-resume-id', inv.resumeId || '');
         card.setAttribute('data-user-id', userId || '');
@@ -420,7 +533,7 @@ if (app.status === "interview") {
         card.innerHTML = `
             <div class="status-label invited">Шақыру</div>
             <h4>${resumeData?.title || "Вакансия"}</h4>
-            <p><strong>Жұмыс іздеуші:</strong> ${userName}</p>
+            <p><strong>Жұмыс іздеуші:</strong> <span class="user-name">${userName}</span></p>
             <p><strong>Күтілетін жалақы:</strong> ${salaryText}</p>
             <p><strong>Локация:</strong> ${resumeData?.location || "Көрсетілмеген"}</p>
             <p class="date">${inv.sentAt ? new Date(inv.sentAt).toLocaleDateString("kk-KZ") : ""}</p>
@@ -457,6 +570,8 @@ if (app.status === "interview") {
 
     async function loadEmployerApplications() {
         try {
+            console.log("Loading employer applications...");
+
             const appRes = await fetch("/vacancies/applications/my", {
                 headers: {
                     "Authorization": "Bearer " + token,
@@ -471,6 +586,7 @@ if (app.status === "interview") {
             }
 
             const applications = await appRes.json();
+            console.log("Applications loaded:", applications);
 
             const invRes = await fetch("/invitations/my", {
                 headers: {
@@ -482,6 +598,7 @@ if (app.status === "interview") {
             let invitations = [];
             if (invRes.ok) {
                 invitations = await invRes.json();
+                console.log("Invitations loaded:", invitations);
             } else {
                 console.warn("Could not load invitations, status:", invRes.status);
             }
@@ -559,6 +676,18 @@ if (app.status === "interview") {
                                 await updateStatus(appId, "rejected");
                             });
                         }
+                    }
+
+                    // Чат батырмасы үшін обработчик
+                    const chatBtn = cloneForAll.querySelector(".chat-btn");
+                    if (chatBtn) {
+                        chatBtn.addEventListener("click", (e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            const userId = chatBtn.getAttribute('data-user-id');
+                            console.log("Clone chat button clicked, userId:", userId);
+                            goToChat(userId);
+                        });
                     }
 
                     // Добавляем обработчик клика для клонированной карточки

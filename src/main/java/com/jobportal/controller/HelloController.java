@@ -37,7 +37,7 @@ public class HelloController {
         return "response";
     }
 
-    @GetMapping("/chat")
+    @GetMapping("/chats")
     public String chatPage() {
         return "chats";
     }
@@ -57,7 +57,7 @@ public class HelloController {
         return "responseem";
     }
 
-    @GetMapping("/chatem")
+    @GetMapping("/chatsem")
     public String chatemployerPage() {
         return "chatsem";
     }

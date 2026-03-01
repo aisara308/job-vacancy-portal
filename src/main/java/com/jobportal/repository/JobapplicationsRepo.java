@@ -10,4 +10,5 @@ public interface JobapplicationsRepo extends JpaRepository<Jobapplications, Inte
     List<Jobapplications> findByApplicantId(Integer applicantId);
     List<Jobapplications> findByVacancyIdIn(List<Integer> vacancyIds);
     boolean existsByResumeIdAndVacancyId(Integer resumeId, Integer vacancyId);
+    long countByVacancyId(Integer vacancyId);
 }

@@ -119,7 +119,9 @@
 
             const data = await response.json();
             resumes = data.resumes || [];
-            renderResumes(resumes);
+
+            // Загружаем счетчики для всех резюме и рендерим
+            await renderResumes(resumes);
 
         } catch (err) {
             console.error("Қате:", err);
@@ -180,15 +182,41 @@
             }
         });
 
+        // Функция для получения количества приглашений
+        async function getInvitationsCount(resumeId) {
+            try {
+                const response = await fetch(`/invitations/count/${resumeId}`, {
+                    headers: { "Authorization": "Bearer " + token }
+                });
+
+                if (response.ok) {
+                    return await response.json();
+                }
+                return 0;
+            } catch (error) {
+                console.error(`Ошибка при получении количества приглашений для резюме ${resumeId}:`, error);
+                return 0;
+            }
+        }
+
         // Функция отображения резюме
-        function renderResumes(list) {
+        async function renderResumes(list) {
             container.innerHTML = "";
             if (list.length === 0) {
                 container.innerHTML = "<p style='text-align:center;color:#333;'>Резюме табылмады.</p>";
                 return;
             }
 
-            list.forEach(res => {
+            // Загружаем счетчики для всех резюме параллельно
+            const resumesWithCounts = await Promise.all(
+                list.map(async (res) => {
+                    const resumeId = res.resumeId || res.id;
+                    const count = await getInvitationsCount(resumeId);
+                    return { ...res, invitationsCount: count };
+                })
+            );
+
+            resumesWithCounts.forEach(res => {
                 const resumeId = res.resumeId || res.id;
 
                 const card = document.createElement("div");
@@ -217,7 +245,7 @@
                     <div class="salary">
                         ${res.salaryExpectation ? res.salaryExpectation + " ₸" : ""}
                     </div>
-                    <p class="responses"><span>0</span> компания қызықтырады</p>
+                    <p class="responses"><span>${res.invitationsCount}</span> компания шақырды</p>
                     <button class="apply-btn" data-resume-id="${resumeId}">Байланысу ➤</button>
                 `;
 
@@ -320,6 +348,13 @@
 
                                 alert("Сәтті өтініш жіберілді!");
                                 modal.style.display = "none";
+
+                                // Обновляем счетчик для этого резюме
+                                const updatedCount = await getInvitationsCount(currentResumeId);
+                                const countSpan = btn.closest(".vacancy-card")?.querySelector(".responses span");
+                                if (countSpan) {
+                                    countSpan.textContent = updatedCount;
+                                }
 
                             } catch (fetchError) {
                                 console.error("Ошибка при отправке запроса:", fetchError);

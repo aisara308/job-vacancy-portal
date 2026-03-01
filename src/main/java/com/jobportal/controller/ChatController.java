@@ -7,6 +7,8 @@ import com.jobportal.service.ChatService;
 import com.jobportal.repository.UserRepo;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -54,6 +56,7 @@ public class ChatController {
     }
 
     @GetMapping("/{chatId}/messages")
+    @ResponseBody
     public ResponseEntity<?> getMessages(@PathVariable Long chatId, Authentication authentication) {
         String email = authentication.getName();
         Users currentUser = userRepo.findByEmail(email)
@@ -79,6 +82,7 @@ public class ChatController {
 
     // Отправка сообщения через REST (необязательно, WebSocket лучше)
     @PostMapping("/{chatId}/send")
+    @ResponseBody
     public ResponseEntity<Message> sendMessage(@PathVariable Long chatId,
                                                @RequestParam String content,
                                                Authentication authentication) {
@@ -94,6 +98,103 @@ public class ChatController {
         return ResponseEntity.ok(message);
     }
 
+    @GetMapping("/my-chats")
+    @ResponseBody
+    public ResponseEntity<List<UserChatDTO>> getMyChats(Authentication authentication) {
+        String email = authentication.getName();
+        Users currentUser = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Получаем все чаты пользователя
+        List<Chat> userChats = chatService.getChatsByUserId(currentUser.getUserId());
+
+        // Преобразуем в DTO с дополнительной информацией
+        List<UserChatDTO> chatDTOs = userChats.stream()
+                .map(chat -> {
+                    // Определяем другого участника чата
+                    Users otherUser = chat.getUser1().getUserId().equals(currentUser.getUserId())
+                            ? chat.getUser2()
+                            : chat.getUser1();
+
+                    // Получаем последнее сообщение в чате
+                    Message lastMessage = chatService.getLastMessage(chat.getId());
+
+                    // Проверяем, есть ли непрочитанные сообщения от другого пользователя
+                    boolean hasUnread = chatService.hasUnreadMessages(chat.getId(), currentUser.getUserId());
+
+                    return new UserChatDTO(
+                            chat.getId(),
+                            otherUser.getUserId(),
+                            otherUser.getFullName(),
+                            lastMessage != null ? lastMessage.getContent() : "Нет сообщений",
+                            lastMessage != null ? lastMessage.getCreatedAt() : null,
+                            lastMessage != null ? lastMessage.getSender().getUserId().equals(currentUser.getUserId()) : false,
+                            hasUnread // <-- новое поле
+                    );
+                })
+                // Сортируем по времени последнего сообщения (сначала новые)
+                .sorted((dto1, dto2) -> {
+                    if (dto1.getLastMessageTime() == null && dto2.getLastMessageTime() == null) return 0;
+                    if (dto1.getLastMessageTime() == null) return 1;
+                    if (dto2.getLastMessageTime() == null) return -1;
+                    return dto2.getLastMessageTime().compareTo(dto1.getLastMessageTime());
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(chatDTOs);
+    }
+
+    @PutMapping("/{chatId}/read")
+    @ResponseBody
+    public ResponseEntity<?> markChatAsRead(
+            @PathVariable Long chatId,
+            Authentication authentication
+    ) {
+
+        // Получаем текущего пользователя ТАК ЖЕ как у тебя в my-chats
+        String email = authentication.getName();
+
+        Users currentUser = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Помечаем сообщения как прочитанные
+        chatService.markAsRead(chatId, currentUser.getUserId());
+
+        return ResponseEntity.ok().build();
+    }
+}
+
+class UserChatDTO {
+    private Long chatId;
+    private Long otherUserId;
+    private String otherUserName;
+    private String lastMessage;
+    private LocalDateTime lastMessageTime;
+    private boolean lastMessageFromMe;
+    private boolean hasUnreadMessages;
+
+    public UserChatDTO(Long chatId, Long otherUserId, String otherUserName,
+                       String lastMessage, LocalDateTime lastMessageTime,
+                       boolean lastMessageFromMe, boolean hasUnreadMessages) {
+        this.chatId = chatId;
+        this.otherUserId = otherUserId;
+        this.otherUserName = otherUserName;
+        this.lastMessage = lastMessage;
+        this.lastMessageTime = lastMessageTime;
+        this.lastMessageFromMe = lastMessageFromMe;
+        this.hasUnreadMessages = hasUnreadMessages;
+    }
+
+    // Геттеры
+    public Long getChatId() { return chatId; }
+    public Long getOtherUserId() { return otherUserId; }
+    public String getOtherUserName() { return otherUserName; }
+    public String getLastMessage() { return lastMessage; }
+    public LocalDateTime getLastMessageTime() { return lastMessageTime; }
+    public boolean isLastMessageFromMe() { return lastMessageFromMe; }
+    public boolean isHasUnreadMessages() {
+        return hasUnreadMessages;
+    }
 }
 
 class ChatDTO {

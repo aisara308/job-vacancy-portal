@@ -84,4 +84,34 @@ public class ChatService {
                 .orElseThrow(() -> new IllegalArgumentException("Chat not found with id: " + chatId));
         return messageRepo.findByChatOrderByCreatedAtAsc(chat);
     }
+
+    /**
+     * Получение всех чатов пользователя
+     * @param userId ID пользователя
+     * @return список чатов
+     */
+    public List<Chat> getChatsByUserId(Long userId) {
+        // Получаем все чаты, где пользователь является участником
+        return chatRepo.findByUser1UserIdOrUser2UserId(userId, userId);
+    }
+
+    /**
+     * Получение последнего сообщения в чате
+     * @param chatId ID чата
+     * @return последнее сообщение или null, если сообщений нет
+     */
+    public Message getLastMessage(Long chatId) {
+        return messageRepo.findTopByChatIdOrderByCreatedAtDesc(chatId);
+    }
+
+    @Transactional
+    public void markAsRead(Long chatId, Long userId) {
+        messageRepo.markMessagesAsRead(chatId, userId);
+    }
+
+    public boolean hasUnreadMessages(Long chatId, Long currentUserId) {
+        // Проверяем, есть ли непрочитанные сообщения в чате от другого пользователя
+        return messageRepo.hasUnreadMessages(chatId, currentUserId);
+    }
+
 }

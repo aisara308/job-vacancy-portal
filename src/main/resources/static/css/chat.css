@@ -1,0 +1,140 @@
+/* Общие стили */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    background-color: #1E1E1E;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Контейнер чата на весь экран */
+.chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Область сообщений */
+.messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    background-color: #1E1E1E;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Сообщения */
+.message {
+    margin: 5px 10px;
+    padding: 10px 14px;
+    border-radius: 20px;
+    background-color: #e0e0e0;
+    max-width: 70%;
+    word-wrap: break-word;
+    align-self: flex-start; /* слева по умолчанию */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column; /* текст сверху, время снизу */
+    transition: all 0.2s;
+}
+
+/* Сообщения текущего пользователя — справа */
+.my-message {
+    background-color: #4caf50;
+    color: white;
+    align-self: flex-end; /* справа */
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 20px;
+}
+
+/* Имя отправителя сверху */
+.sender-name {
+    font-weight: bold;
+    font-size: 0.8em;
+    color: #333; /* темный цвет для видимости */
+    margin-bottom: 4px;
+}
+
+/* Контент сообщения */
+.message-content {
+    font-size: 0.9em;
+    margin-right: 5px; /* немного пространства до времени */
+    color: inherit; /* наследует цвет: зеленый для своего, темный для чужого */
+}
+
+/* Время внизу пузырька */
+.message-time {
+    font-size: 0.7em;
+    color: rgba(0,0,0,0.5);
+    text-align: right;
+}
+
+/* Разделитель даты */
+.date-divider {
+    text-align: center;
+    margin: 15px 0;
+    position: relative;
+}
+
+.date-divider span {
+    background-color: #f2f2f2;
+    padding: 2px 10px;
+    font-size: 0.8em;
+    color: #666;
+    border-radius: 10px;
+}
+
+/* Область ввода */
+.input-area {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ccc;
+    background-color: #1E1E1E;
+}
+
+#messageInput {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 0.9em;
+}
+
+#messageInput:focus {
+    border-color: #4caf50;
+}
+
+button {
+    margin-left: 10px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    background-color: #4caf50;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* Загрузка сообщений */
+.loading {
+    text-align: center;
+    color: #888;
+    font-style: italic;
+}
+
+/* Сообщение системы */
+.system-message {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+}
