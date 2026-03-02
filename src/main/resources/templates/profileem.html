@@ -22,10 +22,6 @@
         </div>
 
     </div>
-    <button class="trash-btn" onclick="openTrash()">
-        Себет
-        <img th:src="@{/images/delete.png}" alt="Себет" class="icon">
-    </button>
 </header>
 
 <main class="resume-section">
@@ -99,12 +95,9 @@
                 </div>
                 <p style="color: #b63a3a;">Төлем мерзімі: ${v.paymentTime || "-"}</p>
                 <div class="resume-actions">
-                  <button class="edit-btn" onclick="editVacancy(${v.vacancyId})">
-                    <img src="/images/editWhite.png" class="icon">
-                  </button>
-                  <button class="delete-btn" onclick="deleteVacancy(${v.vacancyId})">
-                    <img src="/images/delete.png" class="icon">
-                  </button>
+                        <button class="delete-btn" onclick="deleteVacancy(${v.vacancyId})">
+        <img src="/images/delete.png" class="icon">
+      </button>
                 </div>
               </div>
             `).join("");
@@ -130,25 +123,29 @@ window.onclick = function(event) {
         modal.style.display = "none";
     }
 }
-    // Кнопки редактирования/удаления
-    document.getElementById("modalEditBtn").onclick = () => editVacancy(vacancy.vacancy_id);
-    document.getElementById("modalDeleteBtn").onclick = () => deleteVacancy(vacancy.vacancy_id);
+    document.getElementById("modalDeleteBtn").onclick = () => deleteVacancy(vacancy.vacancyId);
 
     document.getElementById("vacancyModal").style.display = "flex";
+}
+
+function deleteVacancy(id) {
+    if (!confirm("Сіз шынымен вакансияны жойғыңыз келе ме?")) return;
+
+    fetch(`/vacancies/delete/${id}`, {
+        method: "DELETE", // используем DELETE
+        headers: { "Authorization": "Bearer " + token }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Сервер қатесі!");
+        return res.text();
+    })
+    .then(() => loadVacanciesFromServer())
+    .catch(err => alert(err.message));
 }
 
 function closeVacancyModal() {
     document.getElementById("vacancyModal").style.display = "none";
 }
-    function deleteVacancy(id) {
-        if (!confirm("Сіз шынымен вакансияны жойғыңыз келе ме?")) return;
-        fetch(`/vacancies/delete/${id}`, {
-            method: "PUT",
-            headers: { "Authorization": "Bearer " + token }
-        })
-        .then(() => loadVacanciesFromServer())
-        .catch(() => alert("Сервер қатесі!"));
-    }
 
     function editVacancy(id) {
         window.location.href = `/vacancy/edit/${id}`;
@@ -234,7 +231,6 @@ function closeVacancyModal() {
             </div>
         </div>
         <div class="resume-modal-footer left-actions">
-            <button class="modal-edit" id="modalEditBtn" onclick="event.stopPropagation(); editVacancy(${v.vacancyId})">Өңдеу</button>
             <button class="modal-delete" id="modalDeleteBtn" onclick="event.stopPropagation(); deleteVacancy(${v.vacancyId})">Жою</button>
         </div>
     </div>

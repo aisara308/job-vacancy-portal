@@ -91,6 +91,37 @@ public class VacancyController {
         }
     }
 
+    @DeleteMapping("/delete/{vacancyId}")
+    @ResponseBody
+    public ResponseEntity<?> deleteVacancy(@PathVariable Long vacancyId, Authentication authentication) {
+        try {
+            if (authentication == null) {
+                return ResponseEntity.status(401).body("Не авторизован");
+            }
+
+            String username = authentication.getName();
+
+            // Найдём вакансию
+            Vacancies vacancy = vacancyRepo.findById(vacancyId)
+                    .orElseThrow(() -> new RuntimeException("Вакансия не найдена"));
+
+            // Проверим, что текущий пользователь владелец
+            Users currentUser = userRepo.findByEmail(username)
+                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+            if (!vacancy.getEmployerId().equals(currentUser.getUserId().intValue())) {
+                return ResponseEntity.status(403).body("Нельзя удалить чужую вакансию");
+            }
+
+            // Удаляем вакансию из базы
+            vacancyRepo.delete(vacancy);
+
+            return ResponseEntity.ok("Вакансия успешно удалена");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Ошибка: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/{vacancyId}")
     @ResponseBody
     public ResponseEntity<?> getVacancyById(@PathVariable Long vacancyId) {
