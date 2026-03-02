@@ -204,10 +204,6 @@ body {
     width: 70%;
 }
 
-.chat-btn:hover {
-    background: #1f5ed6;
-}
-
 .modal{
   display: none;
   position: fixed;
